@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Geo Elm</title>
+    <style>
+        html, body, #map {width:100%; height:100%;margin:0;}
+    </style>
+    <script type="text/javascript" src="build/Main.js"></script>
+    <script type="text/javascript" src="resources/2012347.json"></script>
+    <script type="text/javascript" src="resources/2017231.json"></script>
+    <script type="text/javascript" src="resources/2026201.json"></script>
+    <script type="text/javascript" src="resources/2030413.json"></script>
+    <script type="text/javascript" src="resources/2036207.json"></script>
+    <script type="text/javascript">
+        var elmCtx;
+        function init() {
+            var div = document.getElementById('map');
+            elmCtx = Elm.embed(Elm.Main, div, 
+                {mouseWheelIn: {pos:[0, 0], delta : 0},
+                 screenSizeIn: [div.offsetWidth, div.offsetHeight],
+                 vehicleIn:[]
+                });
+            div.addEventListener("wheel", zoom);
+            elmCtx.ports.screenSizeIn.send([div.offsetWidth, div.offsetHeight]);
+            elmCtx.ports.vehicleIn.send([v2012347,v2017231,v2030413,v2036207,v2026201]);
+        }
+        function zoom(evt) {
+            elmCtx.ports.mouseWheelIn.send({pos : [evt.offsetX, evt.offsetY], delta : evt.wheelDelta});
+        }
+    </script>  
+</head>
+ 
+  <body onload="init()">
+   <div onmousedown="return false" id="map"></div>
+  </body>
+</html>

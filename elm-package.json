@@ -1,0 +1,22 @@
+{
+    "version": "1.0.0",
+    "summary": "helpful summary of your project, less than 80 characters",
+    "repository": "https://github.com/user/project.git",
+    "license": "BSD3",
+    "source-directories": [
+        "src"
+    ],
+    "exposed-modules": [],
+    "dependencies": {
+        "elm-lang/core": "3.0.0 <= v < 4.0.0",
+		"evancz/elm-html": "4.0.0 <= v <= 4.0.2",
+        "jvoigtlaender/elm-drag" : "1.0.0 <= v <= 1.0.3",
+        "mgold/elm-animation": "1.0.1 <= v < 1.0.3",
+        "Apanatshka/elm-signal-extra": "5.7.0 <= v < 5.7.1",
+        "circuithub/elm-list-extra": "3.9.0 <= v < 3.9.1",
+        "rluiten/elm-date-extra": "1.4.0 <= v < 1.4.1",
+        "jystic/elm-font-awesome": "1.1.0 <= v < 1.1.1",
+        "krisajenkins/elm-exts": "10.2.6 <= v < 10.2.7"
+    },
+    "elm-version": "0.16.0 <= v < 0.17.0"
+}
