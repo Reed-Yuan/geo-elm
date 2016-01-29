@@ -245,7 +245,7 @@ parseGps gpsxRaw colr icn =
     let 
         parseRow (vid, timeStr, lat, lon, speed, direction) = 
             {vehicleId = vid
-            , vehicleName = vid |> toString |> String.append "#"
+            , vehicleName = vid - 2000000 |> toString |> String.append "#"
             , timestamp = Date.fromString timeStr |> Result.withDefault (Date.fromTime 0) |> Date.toTime |> (+) global_tzone
             , lat = lat, lon = lon, speed = speed, direction = direction}
         isValidTime x = x.timestamp > 0
@@ -276,11 +276,11 @@ checkBoxes vlist =
     Html.span [style [("font-size", "x-large"), ("font-weight", "bold")]] [Html.text "Select vehicles"]
     :: br [] []
     :: br [] []
-    :: checkbox (Set.member 2012347 vlist) 2012347 "  #2012347" "red"
-    ++ checkbox (Set.member 2017231 vlist) 2017231 "  #2017231" "blue"
-    ++ checkbox (Set.member 2030413 vlist) 2030413 "  #2030413" "brown"
-    ++ checkbox (Set.member 2036207 vlist) 2036207 "  #2036207" "orange"
-    ++ checkbox (Set.member 2026201 vlist) 2026201 "  #2026201" "darkGreen"
+    :: checkbox (Set.member 2012347 vlist) 2012347 "  #12347" "red"
+    ++ checkbox (Set.member 2017231 vlist) 2017231 "  #17231" "blue"
+    ++ checkbox (Set.member 2030413 vlist) 2030413 "  #30413" "brown"
+    ++ checkbox (Set.member 2036207 vlist) 2036207 "  #36207" "orange"
+    ++ checkbox (Set.member 2026201 vlist) 2026201 "  #26201" "darkGreen"
     
 checkbox : Bool -> Int -> String -> String -> List Html
 checkbox isChecked vid name colr =

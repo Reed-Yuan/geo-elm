@@ -18070,7 +18070,9 @@ Elm.Main.make = function (_elm) {
          var _p10 = _p9;
          var _p11 = _p10._0;
          return {vehicleId: _p11
-                ,vehicleName: A2($String.append,"#",$Basics.toString(_p11))
+                ,vehicleName: A2($String.append,
+                "#",
+                $Basics.toString(_p11 - 2000000))
                 ,timestamp: A2(F2(function (x,y) {    return x + y;}),
                 global_tzone,
                 $Date.toTime(A2($Result.withDefault,
@@ -18342,30 +18344,30 @@ Elm.Main.make = function (_elm) {
       A4(checkbox,
       A2($Set.member,2012347,vlist),
       2012347,
-      "  #2012347",
+      "  #12347",
       "red"),
       A2($Basics._op["++"],
       A4(checkbox,
       A2($Set.member,2017231,vlist),
       2017231,
-      "  #2017231",
+      "  #17231",
       "blue"),
       A2($Basics._op["++"],
       A4(checkbox,
       A2($Set.member,2030413,vlist),
       2030413,
-      "  #2030413",
+      "  #30413",
       "brown"),
       A2($Basics._op["++"],
       A4(checkbox,
       A2($Set.member,2036207,vlist),
       2036207,
-      "  #2036207",
+      "  #36207",
       "orange"),
       A4(checkbox,
       A2($Set.member,2026201,vlist),
       2026201,
-      "  #2026201",
+      "  #26201",
       "darkGreen")))))))));
    };
    var Buff = function (a) {    return {ctor: "Buff",_0: a};};
