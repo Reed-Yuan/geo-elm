@@ -184,15 +184,18 @@ render state (slid, alp) =
         tbox = videoControl w 40 t isPlaying |> toForm |> move (0, 40 - (toFloat h / 2))
         cboxes = checkBoxes state.vehicleList |> Html.toElement 240 200 |> toForm |> move (140 - (toFloat w)/2, (toFloat h)/2 - 180)
         radios = traceLength state.traceLength |> Html.toElement 240 200 |> toForm |> move (140 - (toFloat w)/2, (toFloat h)/2 - 380)
-        gitLink = Html.span [style [("padding", "4px 10px 4px 10px"),("background-color", "rgba(255, 255, 255, 0.9)"), 
-                    ("color", "blue"), ("font-size", "x-large")]] [Html.text "Source code @GitHub"] 
-                    |> Html.toElement 240 200 |> toForm |> move (140 - (toFloat w)/2, (toFloat h)/2 - 680)
+        gitLink =
+                let
+                    a = Text.fromString "Source code @GitHub" |> Text.link "https://github.com/Reed-Yuan/geo-elm.git" |> Text.height 22 |> leftAligned
+                    b = spacer 240 70 |> color white |> opacity 0.9
+                in
+                    layers [b, spacer 1 20 `above` a] |> toForm |> move (140 - (toFloat w)/2, (toFloat h)/2 - 680)
+                  
         clockE = clocky t |> toForm  |> move ((toFloat w)/2 - 80, (toFloat h)/2 - 160)
         title = Html.span [style [("color", "blue"), ("font-size", "xx-large")]] [Html.text "Map Visualization with ELM: 5 Vehicles in 24 Hours"] 
                 |> Html.toElement 700 60 |> toForm |> move (380 - (toFloat w)/2,  (toFloat h)/2 - 40)
         slidE = slid |> move (140 - (toFloat w)/2, (toFloat h)/2 - 510)        
     in
-        --collage w h [toForm baseMap |> alpha alp, tbox, clockE, cboxes, radios, title, tc]
         collage w h [toForm baseMap |> alpha alp, tc, tbox, clockE, cboxes, radios, title, gitLink, slidE]
                     
 showTrace: VehiclTrace -> Time -> Int -> TileMap.Map -> Form

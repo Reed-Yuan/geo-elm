@@ -18538,23 +18538,26 @@ Elm.Main.make = function (_elm) {
       240,
       200,
       traceLength(state.traceLength))));
-      var gitLink = A2($Graphics$Collage.move,
-      {ctor: "_Tuple2"
-      ,_0: 140 - $Basics.toFloat(w) / 2
-      ,_1: $Basics.toFloat(h) / 2 - 680},
-      $Graphics$Collage.toForm(A3($Html.toElement,
-      240,
-      200,
-      A2($Html.span,
-      _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
-                                               ,_0: "padding"
-                                               ,_1: "4px 10px 4px 10px"}
-                                              ,{ctor: "_Tuple2"
-                                               ,_0: "background-color"
-                                               ,_1: "rgba(255, 255, 255, 0.9)"}
-                                              ,{ctor: "_Tuple2",_0: "color",_1: "blue"}
-                                              ,{ctor: "_Tuple2",_0: "font-size",_1: "x-large"}]))]),
-      _U.list([$Html.text("Source code @GitHub")])))));
+      var gitLink = function () {
+         var b = A2($Graphics$Element.opacity,
+         0.9,
+         A2($Graphics$Element.color,
+         $Color.white,
+         A2($Graphics$Element.spacer,240,70)));
+         var a = $Graphics$Element.leftAligned(A2($Text.height,
+         22,
+         A2($Text.link,
+         "https://github.com/Reed-Yuan/geo-elm.git",
+         $Text.fromString("Source code @GitHub"))));
+         return A2($Graphics$Collage.move,
+         {ctor: "_Tuple2"
+         ,_0: 140 - $Basics.toFloat(w) / 2
+         ,_1: $Basics.toFloat(h) / 2 - 680},
+         $Graphics$Collage.toForm($Graphics$Element.layers(_U.list([b
+                                                                   ,A2($Graphics$Element.above,
+                                                                   A2($Graphics$Element.spacer,1,20),
+                                                                   a)]))));
+      }();
       var clockE = A2($Graphics$Collage.move,
       {ctor: "_Tuple2"
       ,_0: $Basics.toFloat(w) / 2 - 80
