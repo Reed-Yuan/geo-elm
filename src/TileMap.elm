@@ -9,6 +9,7 @@ import Bitwise
 import Maybe
 import Proj
 import Html exposing (..)
+import List.Extra
 
 type alias Map = 
     {

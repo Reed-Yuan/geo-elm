@@ -10961,147 +10961,6 @@ Elm.Graphics.Input.make = function (_elm) {
                                        ,hoverable: hoverable
                                        ,clickable: clickable};
 };
-Elm.Native.Keyboard = {};
-
-Elm.Native.Keyboard.make = function(localRuntime) {
-	localRuntime.Native = localRuntime.Native || {};
-	localRuntime.Native.Keyboard = localRuntime.Native.Keyboard || {};
-	if (localRuntime.Native.Keyboard.values)
-	{
-		return localRuntime.Native.Keyboard.values;
-	}
-
-	var NS = Elm.Native.Signal.make(localRuntime);
-
-
-	function keyEvent(event)
-	{
-		return {
-			alt: event.altKey,
-			meta: event.metaKey,
-			keyCode: event.keyCode
-		};
-	}
-
-
-	function keyStream(node, eventName, handler)
-	{
-		var stream = NS.input(eventName, { alt: false, meta: false, keyCode: 0 });
-
-		localRuntime.addListener([stream.id], node, eventName, function(e) {
-			localRuntime.notify(stream.id, handler(e));
-		});
-
-		return stream;
-	}
-
-	var downs = keyStream(document, 'keydown', keyEvent);
-	var ups = keyStream(document, 'keyup', keyEvent);
-	var presses = keyStream(document, 'keypress', keyEvent);
-	var blurs = keyStream(window, 'blur', function() { return null; });
-
-
-	return localRuntime.Native.Keyboard.values = {
-		downs: downs,
-		ups: ups,
-		blurs: blurs,
-		presses: presses
-	};
-};
-
-Elm.Keyboard = Elm.Keyboard || {};
-Elm.Keyboard.make = function (_elm) {
-   "use strict";
-   _elm.Keyboard = _elm.Keyboard || {};
-   if (_elm.Keyboard.values) return _elm.Keyboard.values;
-   var _U = Elm.Native.Utils.make(_elm),
-   $Basics = Elm.Basics.make(_elm),
-   $Char = Elm.Char.make(_elm),
-   $Native$Keyboard = Elm.Native.Keyboard.make(_elm),
-   $Set = Elm.Set.make(_elm),
-   $Signal = Elm.Signal.make(_elm);
-   var _op = {};
-   var presses = A2($Signal.map,
-   function (_) {
-      return _.keyCode;
-   },
-   $Native$Keyboard.presses);
-   var toXY = F2(function (_p0,keyCodes) {
-      var _p1 = _p0;
-      var is = function (keyCode) {
-         return A2($Set.member,keyCode,keyCodes) ? 1 : 0;
-      };
-      return {x: is(_p1.right) - is(_p1.left)
-             ,y: is(_p1.up) - is(_p1.down)};
-   });
-   var Directions = F4(function (a,b,c,d) {
-      return {up: a,down: b,left: c,right: d};
-   });
-   var dropMap = F2(function (f,signal) {
-      return $Signal.dropRepeats(A2($Signal.map,f,signal));
-   });
-   var EventInfo = F3(function (a,b,c) {
-      return {alt: a,meta: b,keyCode: c};
-   });
-   var Blur = {ctor: "Blur"};
-   var Down = function (a) {    return {ctor: "Down",_0: a};};
-   var Up = function (a) {    return {ctor: "Up",_0: a};};
-   var rawEvents = $Signal.mergeMany(_U.list([A2($Signal.map,
-                                             Up,
-                                             $Native$Keyboard.ups)
-                                             ,A2($Signal.map,Down,$Native$Keyboard.downs)
-                                             ,A2($Signal.map,$Basics.always(Blur),$Native$Keyboard.blurs)]));
-   var empty = {alt: false,meta: false,keyCodes: $Set.empty};
-   var update = F2(function (event,model) {
-      var _p2 = event;
-      switch (_p2.ctor)
-      {case "Down": var _p3 = _p2._0;
-           return {alt: _p3.alt
-                  ,meta: _p3.meta
-                  ,keyCodes: A2($Set.insert,_p3.keyCode,model.keyCodes)};
-         case "Up": var _p4 = _p2._0;
-           return {alt: _p4.alt
-                  ,meta: _p4.meta
-                  ,keyCodes: A2($Set.remove,_p4.keyCode,model.keyCodes)};
-         default: return empty;}
-   });
-   var model = A3($Signal.foldp,update,empty,rawEvents);
-   var alt = A2(dropMap,function (_) {    return _.alt;},model);
-   var meta = A2(dropMap,function (_) {    return _.meta;},model);
-   var keysDown = A2(dropMap,
-   function (_) {
-      return _.keyCodes;
-   },
-   model);
-   var arrows = A2(dropMap,
-   toXY({up: 38,down: 40,left: 37,right: 39}),
-   keysDown);
-   var wasd = A2(dropMap,
-   toXY({up: 87,down: 83,left: 65,right: 68}),
-   keysDown);
-   var isDown = function (keyCode) {
-      return A2(dropMap,$Set.member(keyCode),keysDown);
-   };
-   var ctrl = isDown(17);
-   var shift = isDown(16);
-   var space = isDown(32);
-   var enter = isDown(13);
-   var Model = F3(function (a,b,c) {
-      return {alt: a,meta: b,keyCodes: c};
-   });
-   return _elm.Keyboard.values = {_op: _op
-                                 ,arrows: arrows
-                                 ,wasd: wasd
-                                 ,enter: enter
-                                 ,space: space
-                                 ,ctrl: ctrl
-                                 ,shift: shift
-                                 ,alt: alt
-                                 ,meta: meta
-                                 ,isDown: isDown
-                                 ,keysDown: keysDown
-                                 ,presses: presses};
-};
 Elm.Native = Elm.Native || {};
 Elm.Native.Mouse = {};
 Elm.Native.Mouse.make = function(localRuntime) {
@@ -17351,6 +17210,39 @@ Elm.Date.Format.make = function (_elm) {
                                     ,isoDateFormat: isoDateFormat
                                     ,isoTimeFormat: isoTimeFormat};
 };
+Elm.Utils = Elm.Utils || {};
+Elm.Utils.make = function (_elm) {
+   "use strict";
+   _elm.Utils = _elm.Utils || {};
+   if (_elm.Utils.values) return _elm.Utils.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Date = Elm.Date.make(_elm),
+   $Date$Create = Elm.Date.Create.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var global_tzone = $Basics.toFloat(A2(F2(function (x,y) {
+      return x - y;
+   }),
+   0,
+   A2(F2(function (x,y) {    return x * y;}),
+   60000,
+   $Date$Create.getTimezoneOffset($Date.fromTime(0)))));
+   var timeFromString = function (str) {
+      return A2(F2(function (x,y) {    return x + y;}),
+      global_tzone,
+      $Date.toTime(A2($Result.withDefault,
+      $Date.fromTime(0),
+      $Date.fromString(str))));
+   };
+   return _elm.Utils.values = {_op: _op
+                              ,global_tzone: global_tzone
+                              ,timeFromString: timeFromString};
+};
 Elm.Proj = Elm.Proj || {};
 Elm.Proj.make = function (_elm) {
    "use strict";
@@ -17844,218 +17736,66 @@ Elm.TileMap.make = function (_elm) {
                                 ,between: between
                                 ,zoom: zoom};
 };
-Elm.Main = Elm.Main || {};
-Elm.Main.make = function (_elm) {
+Elm.Data = Elm.Data || {};
+Elm.Data.make = function (_elm) {
    "use strict";
-   _elm.Main = _elm.Main || {};
-   if (_elm.Main.values) return _elm.Main.values;
+   _elm.Data = _elm.Data || {};
+   if (_elm.Data.values) return _elm.Data.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Animation = Elm.Animation.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Color = Elm.Color.make(_elm),
-   $Date = Elm.Date.make(_elm),
-   $Date$Config$Config_en_us = Elm.Date.Config.Config_en_us.make(_elm),
-   $Date$Create = Elm.Date.Create.make(_elm),
-   $Date$Format = Elm.Date.Format.make(_elm),
    $Debug = Elm.Debug.make(_elm),
-   $Drag = Elm.Drag.make(_elm),
-   $Exts$Float = Elm.Exts.Float.make(_elm),
-   $FontAwesome = Elm.FontAwesome.make(_elm),
    $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
    $Graphics$Element = Elm.Graphics.Element.make(_elm),
-   $Graphics$Input = Elm.Graphics.Input.make(_elm),
    $Html = Elm.Html.make(_elm),
-   $Html$Attributes = Elm.Html.Attributes.make(_elm),
-   $Html$Events = Elm.Html.Events.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
-   $Set = Elm.Set.make(_elm),
    $Signal = Elm.Signal.make(_elm),
-   $Signal$Extra = Elm.Signal.Extra.make(_elm),
    $String = Elm.String.make(_elm),
-   $Text = Elm.Text.make(_elm),
    $TileMap = Elm.TileMap.make(_elm),
-   $Time = Elm.Time.make(_elm);
+   $Utils = Elm.Utils.make(_elm);
    var _op = {};
-   var showTrace = F4(function (_p0,t,tcLength,mapp) {
-      var _p1 = _p0;
-      var _p5 = _p1._2;
-      var trace = $List.reverse(A2($List.filter,
-      function (g) {
-         return _U.cmp(g.timestamp,t) < 0 && _U.cmp(t - g.timestamp,
-         (_U.eq(tcLength,0) ? 24 : tcLength) * 3600000) < 1;
-      },
-      _p1._5));
-      var head = function () {
-         var _p2 = $List.head(trace);
-         if (_p2.ctor === "Just") {
-               var _p4 = _p2._0;
-               var _p3 = A2($TileMap.proj,
-               {ctor: "_Tuple2",_0: _p4.lat,_1: _p4.lon},
-               mapp);
-               var x = _p3._0;
-               var y = _p3._1;
-               var p = A2($Graphics$Collage.move,
-               {ctor: "_Tuple2",_0: x,_1: y},
-               _p1._3);
-               var n = A2($Graphics$Collage.move,
-               {ctor: "_Tuple2",_0: x + 40,_1: y + 20},
-               A2($Graphics$Collage.outlinedText,
-               _U.update($Graphics$Collage.defaultLine,{width: 1,color: _p5}),
-               $Text.fromString(_p1._1)));
-               return $Graphics$Collage.group(_U.list([p,n]));
-            } else {
-               return $Graphics$Collage.toForm($Graphics$Element.empty);
-            }
-      }();
-      var hstE = _U.eq(tcLength,
-      0) ? $Graphics$Collage.toForm($Graphics$Element.empty) : A3($TileMap.path,
-      trace,
-      mapp,
-      _U.update($Graphics$Collage.defaultLine,
-      {color: _p5,width: 6,dashing: _U.list([8,4])}));
-      return $Graphics$Collage.group(_U.list([head,hstE]));
-   });
-   var shadowFlow = $Signal.mailbox(false);
-   var slider = function (widthHalf) {
-      var sum_ = F2(function (a,acc) {
-         return A2($Basics.max,
-         5 - widthHalf,
-         A2($Basics.min,widthHalf - 5,a + acc));
-      });
-      var widgetFlow = $Signal.mailbox(false);
-      var sliderOps = function () {
-         var merge = F2(function (flag,msEvt) {
-            if (flag) {
-                  var _p6 = msEvt;
-                  if (_p6.ctor === "MoveFromTo" && _p6._0.ctor === "_Tuple2" && _p6._1.ctor === "_Tuple2")
-                  {
-                        return $Basics.round($Basics.toFloat(_p6._1._0 - _p6._0._0) * 1.25);
-                     } else {
-                        return 0;
-                     }
-               } else return 0;
-         });
-         return A3($Signal.map2,
-         merge,
-         widgetFlow.signal,
-         $Drag.mouseEvents);
-      }();
-      var pos = A3($Signal.foldp,sum_,0,sliderOps);
-      var rendr = function (x) {
-         var bck = A2($Graphics$Element.opacity,
-         0.9,
-         A2($Graphics$Element.color,
-         $Color.white,
-         A2($Graphics$Element.spacer,240,70)));
-         var s = A4($Graphics$Element.container,
-         2 * widthHalf,
-         20,
-         A2($Graphics$Element.middleAt,
-         $Graphics$Element.absolute(x + widthHalf),
-         $Graphics$Element.absolute(10)),
-         A2($Graphics$Input.hoverable,
-         $Signal.message(widgetFlow.address),
-         A2($Graphics$Element.color,
-         $Color.red,
-         A2($Graphics$Element.spacer,10,20))));
-         var bar = A4($Graphics$Element.container,
-         2 * widthHalf,
-         20,
-         A2($Graphics$Element.midLeftAt,
-         $Graphics$Element.absolute(0),
-         $Graphics$Element.absolute(10)),
-         A2($Graphics$Element.color,
-         $Color.darkGrey,
-         A2($Graphics$Element.spacer,widthHalf * 2,6)));
-         var pct = A2($Exts$Float.roundTo,
-         2,
-         $Basics.toFloat(x + widthHalf - 5) / $Basics.toFloat(widthHalf - 5) / 2);
-         var title = A3($Html.toElement,
-         200,
-         40,
-         A2($Html.span,
-         _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
-                                                  ,_0: "font-weight"
-                                                  ,_1: "bold"}
-                                                 ,{ctor: "_Tuple2",_0: "font-size",_1: "x-large"}]))]),
-         _U.list([$Html.text(A2($Basics._op["++"],
-         "Map Alpha: ",
-         $Basics.toString(pct)))])));
-         var c = A2($Graphics$Element.below,
-         A2($Graphics$Element.beside,
-         A2($Graphics$Element.spacer,30,1),
-         $Graphics$Element.layers(_U.list([bar,s]))),
-         title);
-         var v = $Graphics$Collage.toForm(A2($Graphics$Input.hoverable,
-         $Signal.message(shadowFlow.address),
-         $Graphics$Element.layers(_U.list([bck,c]))));
-         return {ctor: "_Tuple2",_0: v,_1: pct};
-      };
-      return A2($Signal.map,rendr,pos);
-   };
-   var global_icons = _U.list([$FontAwesome.truck
-                              ,$FontAwesome.ambulance
-                              ,$FontAwesome.taxi
-                              ,$FontAwesome.motorcycle
-                              ,$FontAwesome.bus]);
-   var global_colors = _U.list([$Color.red
-                               ,$Color.blue
-                               ,$Color.brown
-                               ,$Color.orange
-                               ,$Color.darkGreen]);
-   var global_tzone = $Basics.toFloat(A2(F2(function (x,y) {
-      return x - y;
-   }),
-   0,
-   A2(F2(function (x,y) {    return x * y;}),
-   60000,
-   $Date$Create.getTimezoneOffset($Date.fromTime(0)))));
-   var global_t0 = A2(F2(function (x,y) {    return x + y;}),
-   global_tzone,
-   $Date.toTime(A2($Result.withDefault,
-   $Date.fromTime(0),
-   $Date.fromString("2016-01-11 00:00:00"))));
-   var global_t1 = A2(F2(function (x,y) {    return x + y;}),
-   global_tzone,
-   $Date.toTime(A2($Result.withDefault,
-   $Date.fromTime(0),
-   $Date.fromString("2016-01-12 00:00:00"))));
-   var global_animation = A2($Animation.duration,
-   240 * $Time.second,
-   A2($Animation.to,
-   global_t1,
-   A2($Animation.from,global_t0,$Animation.animation(0))));
-   var parseGps = F3(function (gpsxRaw,colr,icn) {
+   var parseGps = F4(function (gpsxRaw,colr,icn,mapp) {
+      var emptyForm = $Graphics$Collage.toForm($Graphics$Element.empty);
       var process = function (x) {
          if ($List.isEmpty(x)) return {ctor: "_Tuple6"
                                       ,_0: -1
                                       ,_1: ""
                                       ,_2: $Color.red
                                       ,_3: $Graphics$Collage.toForm($Graphics$Element.empty)
-                                      ,_4: _U.list([])
+                                      ,_4: emptyForm
                                       ,_5: _U.list([])}; else {
-               var _p7 = $List.head(x);
-               if (_p7.ctor === "Just") {
-                     var _p8 = _p7._0;
+               var _p0 = $List.head(x);
+               if (_p0.ctor === "Just") {
+                     var _p1 = _p0._0;
+                     var sortedGps = A2($List.sortBy,
+                     function (_) {
+                        return _.timestamp;
+                     },
+                     x);
+                     var fullTrace = A3($TileMap.path,
+                     sortedGps,
+                     mapp,
+                     _U.update($Graphics$Collage.defaultLine,
+                     {color: colr,width: 10}));
                      return {ctor: "_Tuple6"
-                            ,_0: _p8.vehicleId
-                            ,_1: _p8.vehicleName
+                            ,_0: _p1.vehicleId
+                            ,_1: _p1.vehicleName
                             ,_2: colr
                             ,_3: $Graphics$Collage.toForm(A3($Html.toElement,
                             24,
                             24,
                             A2(icn,colr,24)))
-                            ,_4: _U.list([])
-                            ,_5: A2($List.sortBy,function (_) {    return _.timestamp;},x)};
+                            ,_4: fullTrace
+                            ,_5: sortedGps};
                   } else {
                      return {ctor: "_Tuple6"
                             ,_0: -1
                             ,_1: ""
                             ,_2: $Color.red
                             ,_3: $Graphics$Collage.toForm($Graphics$Element.empty)
-                            ,_4: _U.list([])
+                            ,_4: emptyForm
                             ,_5: _U.list([])};
                   }
             }
@@ -18066,33 +17806,58 @@ Elm.Main.make = function (_elm) {
       var isValidTime = function (x) {
          return _U.cmp(x.timestamp,0) > 0;
       };
-      var parseRow = function (_p9) {
-         var _p10 = _p9;
-         var _p11 = _p10._0;
-         return {vehicleId: _p11
+      var parseRow = function (_p2) {
+         var _p3 = _p2;
+         var _p4 = _p3._0;
+         return {vehicleId: _p4
                 ,vehicleName: A2($String.append,
                 "#",
-                $Basics.toString(_p11 - 2000000))
-                ,timestamp: A2(F2(function (x,y) {    return x + y;}),
-                global_tzone,
-                $Date.toTime(A2($Result.withDefault,
-                $Date.fromTime(0),
-                $Date.fromString(_p10._1))))
-                ,lat: _p10._2
-                ,lon: _p10._3
-                ,speed: _p10._4
-                ,direction: _p10._5};
+                $Basics.toString(_p4 - 2000000))
+                ,timestamp: $Utils.timeFromString(_p3._1)
+                ,lat: _p3._2
+                ,lon: _p3._3
+                ,speed: _p3._4
+                ,direction: _p3._5};
       };
       var gpsx = process(A2($List.filter,
       isValidTime,
       A2($List.map,parseRow,gpsxRaw)));
       return gpsx;
    });
-   var clocky = function (t) {
+   return _elm.Data.values = {_op: _op,parseGps: parseGps};
+};
+Elm.VideoControl = Elm.VideoControl || {};
+Elm.VideoControl.make = function (_elm) {
+   "use strict";
+   _elm.VideoControl = _elm.VideoControl || {};
+   if (_elm.VideoControl.values) return _elm.VideoControl.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Animation = Elm.Animation.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Color = Elm.Color.make(_elm),
+   $Date = Elm.Date.make(_elm),
+   $Date$Config$Config_en_us = Elm.Date.Config.Config_en_us.make(_elm),
+   $Date$Format = Elm.Date.Format.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $FontAwesome = Elm.FontAwesome.make(_elm),
+   $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
+   $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $Graphics$Input = Elm.Graphics.Input.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $Html$Attributes = Elm.Html.Attributes.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $Signal$Extra = Elm.Signal.Extra.make(_elm),
+   $Time = Elm.Time.make(_elm),
+   $Utils = Elm.Utils.make(_elm);
+   var _op = {};
+   var clockk = function (t) {
       var d = A3($Date$Format.format,
       $Date$Config$Config_en_us.config,
       "%H:%M:%S",
-      $Date.fromTime(t - global_tzone));
+      $Date.fromTime(t - $Utils.global_tzone));
       var dTxt = A2($Graphics$Collage.moveY,
       -120,
       $Graphics$Collage.toForm(A3($Html.toElement,
@@ -18144,59 +17909,24 @@ Elm.Main.make = function (_elm) {
       300,
       _U.list([clk,dTxt]));
    };
-   var vehicleIn = Elm.Native.Port.make(_elm).inboundSignal("vehicleIn",
-   "List\n    (\n    List\n        ( Int\n        , String\n        , Float\n        , Float\n        , Float\n        , Float\n        )\n    )",
-   function (v) {
-      return typeof v === "object" && v instanceof Array ? Elm.Native.List.make(_elm).fromArray(v.map(function (v) {
-         return typeof v === "object" && v instanceof Array ? Elm.Native.List.make(_elm).fromArray(v.map(function (v) {
-            return typeof v === "object" && v instanceof Array ? {ctor: "_Tuple6"
-                                                                 ,_0: typeof v[0] === "number" && isFinite(v[0]) && Math.floor(v[0]) === v[0] ? v[0] : _U.badPort("an integer",
-                                                                 v[0])
-                                                                 ,_1: typeof v[1] === "string" || typeof v[1] === "object" && v[1] instanceof String ? v[1] : _U.badPort("a string",
-                                                                 v[1])
-                                                                 ,_2: typeof v[2] === "number" ? v[2] : _U.badPort("a number",
-                                                                 v[2])
-                                                                 ,_3: typeof v[3] === "number" ? v[3] : _U.badPort("a number",
-                                                                 v[3])
-                                                                 ,_4: typeof v[4] === "number" ? v[4] : _U.badPort("a number",
-                                                                 v[4])
-                                                                 ,_5: typeof v[5] === "number" ? v[5] : _U.badPort("a number",
-                                                                 v[5])} : _U.badPort("an array",v);
-         })) : _U.badPort("an array",v);
-      })) : _U.badPort("an array",v);
-   });
-   var screenSizeIn = Elm.Native.Port.make(_elm).inboundSignal("screenSizeIn",
-   "( Int, Int )",
-   function (v) {
-      return typeof v === "object" && v instanceof Array ? {ctor: "_Tuple2"
-                                                           ,_0: typeof v[0] === "number" && isFinite(v[0]) && Math.floor(v[0]) === v[0] ? v[0] : _U.badPort("an integer",
-                                                           v[0])
-                                                           ,_1: typeof v[1] === "number" && isFinite(v[1]) && Math.floor(v[1]) === v[1] ? v[1] : _U.badPort("an integer",
-                                                           v[1])} : _U.badPort("an array",v);
-   });
-   var mouseWheelIn = Elm.Native.Port.make(_elm).inboundSignal("mouseWheelIn",
-   "Main.MouseWheel",
-   function (v) {
-      return typeof v === "object" && "pos" in v && "delta" in v ? {_: {}
-                                                                   ,pos: typeof v.pos === "object" && v.pos instanceof Array ? {ctor: "_Tuple2"
-                                                                                                                               ,_0: typeof v.pos[0] === "number" && isFinite(v.pos[0]) && Math.floor(v.pos[0]) === v.pos[0] ? v.pos[0] : _U.badPort("an integer",
-                                                                                                                               v.pos[0])
-                                                                                                                               ,_1: typeof v.pos[1] === "number" && isFinite(v.pos[1]) && Math.floor(v.pos[1]) === v.pos[1] ? v.pos[1] : _U.badPort("an integer",
-                                                                                                                               v.pos[1])} : _U.badPort("an array",
-                                                                   v.pos)
-                                                                   ,delta: typeof v.delta === "number" && isFinite(v.delta) && Math.floor(v.delta) === v.delta ? v.delta : _U.badPort("an integer",
-                                                                   v.delta)} : _U.badPort("an object with fields `pos`, `delta`",
-      v);
-   });
-   var NoOp_0 = {ctor: "NoOp_0"};
-   var MoveSlider = function (a) {
-      return {ctor: "MoveSlider",_0: a};
-   };
    var PauseVideo = {ctor: "PauseVideo"};
    var StopVideo = {ctor: "StopVideo"};
    var PlayVideo = {ctor: "PlayVideo"};
-   var opFlow = $Signal.mailbox(PlayVideo);
-   var videoControl = F4(function (width,ht,t,isPlaying) {
+   var videoOps = $Signal.mailbox(PlayVideo);
+   var Tick = function (a) {    return {ctor: "Tick",_0: a};};
+   var ops = function () {
+      var clock_ = A2($Signal$Extra._op["<~"],Tick,$Time.fps(25));
+      return $Signal.mergeMany(_U.list([clock_,videoOps.signal]));
+   }();
+   var State = F2(function (a,b) {
+      return {clock: a,videoStatus: b};
+   });
+   var Stop = {ctor: "Stop"};
+   var Pause = {ctor: "Pause"};
+   var Playing = {ctor: "Playing"};
+   var global_t1 = $Utils.timeFromString("2016-01-12 00:00:00");
+   var global_t0 = $Utils.timeFromString("2016-01-11 00:00:00");
+   var videoControl = F2(function (t,isPlaying) {
       var p = (t - global_t0) / (global_t1 - global_t0) * 600;
       var progressBar = A2($Graphics$Collage.moveX,
       -200,
@@ -18215,19 +17945,19 @@ Elm.Main.make = function (_elm) {
       {ctor: "_Tuple2",_0: 0,_1: 0},
       {ctor: "_Tuple2",_0: 600,_1: 0})));
       var icon_pause = A2($Graphics$Input.clickable,
-      A2($Signal.message,opFlow.address,PauseVideo),
+      A2($Signal.message,videoOps.address,PauseVideo),
       A3($Html.toElement,
       40,
       20,
       A2($FontAwesome.pause,$Color.darkGreen,20)));
       var icon_play = A2($Graphics$Input.clickable,
-      A2($Signal.message,opFlow.address,PlayVideo),
+      A2($Signal.message,videoOps.address,PlayVideo),
       A3($Html.toElement,
       40,
       20,
       A2($FontAwesome.play,$Color.darkGreen,20)));
       var icon_stop = A2($Graphics$Input.clickable,
-      A2($Signal.message,opFlow.address,StopVideo),
+      A2($Signal.message,videoOps.address,StopVideo),
       A3($Html.toElement,
       40,
       20,
@@ -18239,67 +17969,277 @@ Elm.Main.make = function (_elm) {
       _U.list([icon_pause,icon_stop])) : A2($Graphics$Element.flow,
       $Graphics$Element.right,
       _U.list([icon_play,A2($Graphics$Element.spacer,40,20)]))));
+      var wth = 860;
+      var ht = 40;
       return A3($Graphics$Collage.collage,
-      width,
+      wth,
       ht,
       _U.list([A2($Graphics$Collage.alpha,
               0.7,
               A2($Graphics$Collage.filled,
               $Color.white,
               A2($Graphics$Collage.rect,
-              $Basics.toFloat(860),
+              $Basics.toFloat(wth),
               $Basics.toFloat(ht))))
               ,darkBar
               ,progressBar
               ,icon_]));
    });
-   var TraceLength = function (a) {
-      return {ctor: "TraceLength",_0: a};
-   };
-   var radio = F3(function (cur,i,name) {
-      return _U.list([A2($Html.input,
-                     _U.list([$Html$Attributes.type$("radio")
-                             ,$Html$Attributes.checked(_U.eq(cur,i))
-                             ,A3($Html$Events.on,
-                             "change",
-                             $Html$Events.targetChecked,
-                             function (_p12) {
-                                return A2($Signal.message,opFlow.address,TraceLength(i));
-                             })]),
-                     _U.list([]))
-                     ,A2($Html.span,
-                     _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
-                                                              ,_0: "font-size"
-                                                              ,_1: "x-large"}]))]),
-                     _U.list([$Html.text(name)]))
-                     ,A2($Html.br,_U.list([]),_U.list([]))]);
+   var global_animation = A2($Animation.duration,
+   240 * $Time.second,
+   A2($Animation.to,
+   global_t1,
+   A2($Animation.from,global_t0,$Animation.animation(0))));
+   var trans = F2(function (op,state) {
+      var _p0 = op;
+      switch (_p0.ctor)
+      {case "Tick": var isVideoDone = A2($Animation.isDone,
+           state.clock,
+           global_animation);
+           return _U.eq(state.videoStatus,
+           Playing) && $Basics.not(isVideoDone) ? _U.update(state,
+           {clock: state.clock + _p0._0}) : isVideoDone ? _U.update(state,
+           {videoStatus: Stop,clock: 0}) : state;
+         case "PlayVideo": return _U.update(state,
+           {videoStatus: Playing});
+         case "StopVideo": return _U.update(state,
+           {videoStatus: Stop,clock: 0});
+         default: return _U.update(state,{videoStatus: Pause});}
    });
-   var traceLength = function (cur) {
-      return A2($Html.div,
-      _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
-                                               ,_0: "background-color"
-                                               ,_1: "rgba(255, 255, 255, 0.9)"}]))]),
-      A2($List._op["::"],
-      A2($Html.span,
-      _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
-                                               ,_0: "font-size"
-                                               ,_1: "x-large"}
-                                              ,{ctor: "_Tuple2",_0: "font-weight",_1: "bold"}]))]),
-      _U.list([$Html.text("Select Trace Length")])),
-      A2($List._op["::"],
-      A2($Html.br,_U.list([]),_U.list([])),
-      A2($List._op["::"],
-      A2($Html.br,_U.list([]),_U.list([])),
-      A2($Basics._op["++"],
-      A3(radio,cur,0,"  No trace"),
-      A2($Basics._op["++"],
-      A3(radio,cur,1,"  1 hour trace"),
-      A2($Basics._op["++"],
-      A3(radio,cur,2,"  2 hours trace"),
-      A2($Basics._op["++"],
-      A3(radio,cur,8,"  8 hours trace"),
-      A3(radio,cur,24,"  24 hours trace")))))))));
-   };
+   var videoStateSg = A3($Signal.foldp,trans,A2(State,0,Stop),ops);
+   var videoSg = function () {
+      var aug = function (state) {
+         var isPlaying = _U.eq(state.videoStatus,Playing);
+         var t = A2($Animation.animate,state.clock,global_animation);
+         var progressBar = A2(videoControl,t,isPlaying);
+         var clockWidgt = clockk(t);
+         return {ctor: "_Tuple3",_0: t,_1: progressBar,_2: clockWidgt};
+      };
+      return A2($Signal.map,aug,videoStateSg);
+   }();
+   return _elm.VideoControl.values = {_op: _op
+                                     ,global_animation: global_animation
+                                     ,global_t0: global_t0
+                                     ,global_t1: global_t1
+                                     ,Playing: Playing
+                                     ,Pause: Pause
+                                     ,Stop: Stop
+                                     ,State: State
+                                     ,Tick: Tick
+                                     ,PlayVideo: PlayVideo
+                                     ,StopVideo: StopVideo
+                                     ,PauseVideo: PauseVideo
+                                     ,videoOps: videoOps
+                                     ,ops: ops
+                                     ,trans: trans
+                                     ,videoStateSg: videoStateSg
+                                     ,videoControl: videoControl
+                                     ,clockk: clockk
+                                     ,videoSg: videoSg};
+};
+Elm.Widget = Elm.Widget || {};
+Elm.Widget.make = function (_elm) {
+   "use strict";
+   _elm.Widget = _elm.Widget || {};
+   if (_elm.Widget.values) return _elm.Widget.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Bitwise = Elm.Bitwise.make(_elm),
+   $Color = Elm.Color.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Drag = Elm.Drag.make(_elm),
+   $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $Graphics$Input = Elm.Graphics.Input.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var slider = F2(function (width,initValue) {
+      var widgetFlow = $Signal.mailbox(false);
+      var sliderOps = function () {
+         var merge = F2(function (flag,msEvt) {
+            if (flag) {
+                  var _p0 = msEvt;
+                  if (_p0.ctor === "MoveFromTo" && _p0._0.ctor === "_Tuple2" && _p0._1.ctor === "_Tuple2")
+                  {
+                        return _p0._1._0 - _p0._0._0;
+                     } else {
+                        return 0;
+                     }
+               } else return 0;
+         });
+         return A3($Signal.map2,
+         merge,
+         widgetFlow.signal,
+         $Drag.mouseEvents);
+      }();
+      var widthHalf = A2($Bitwise.shiftRight,width,1);
+      var barHeight = 6;
+      var knotWidth = 10;
+      var knotWidthHalf = A2($Bitwise.shiftRight,knotWidth,1);
+      var lPos = knotWidthHalf;
+      var rPos = width - knotWidthHalf;
+      var step = F2(function (a,acc) {
+         return A2($Basics.max,lPos,A2($Basics.min,rPos,a + acc));
+      });
+      var initPosition = $Basics.round(initValue * $Basics.toFloat(width - knotWidth)) + knotWidthHalf;
+      var posSignal = A3($Signal.foldp,step,initPosition,sliderOps);
+      var knotHeight = 20;
+      var knotHeightHalf = A2($Bitwise.shiftRight,knotHeight,1);
+      var bar = A4($Graphics$Element.container,
+      width,
+      knotHeight,
+      A2($Graphics$Element.midLeftAt,
+      $Graphics$Element.absolute(0),
+      $Graphics$Element.absolute(knotHeightHalf)),
+      A2($Graphics$Element.color,
+      $Color.darkGrey,
+      A2($Graphics$Element.spacer,width,barHeight)));
+      var slideRect = A2($Graphics$Input.hoverable,
+      $Signal.message(widgetFlow.address),
+      A2($Graphics$Element.spacer,width,knotHeight));
+      var render = function (x) {
+         var pct = $Basics.toFloat(x - knotWidthHalf) / $Basics.toFloat(width - knotWidth);
+         var knot = A4($Graphics$Element.container,
+         width,
+         20,
+         A2($Graphics$Element.middleAt,
+         $Graphics$Element.absolute(x),
+         $Graphics$Element.absolute(knotHeightHalf)),
+         A2($Graphics$Element.color,
+         $Color.red,
+         A2($Graphics$Element.spacer,10,20)));
+         var knotAndBar = $Graphics$Element.layers(_U.list([bar
+                                                           ,knot
+                                                           ,slideRect]));
+         return {ctor: "_Tuple2",_0: knotAndBar,_1: pct};
+      };
+      return A2($Signal.map,render,posSignal);
+   });
+   return _elm.Widget.values = {_op: _op,slider: slider};
+};
+Elm.VehicleControl = Elm.VehicleControl || {};
+Elm.VehicleControl.make = function (_elm) {
+   "use strict";
+   _elm.VehicleControl = _elm.VehicleControl || {};
+   if (_elm.VehicleControl.values)
+   return _elm.VehicleControl.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Exts$Float = Elm.Exts.Float.make(_elm),
+   $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $Html$Attributes = Elm.Html.Attributes.make(_elm),
+   $Html$Events = Elm.Html.Events.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Set = Elm.Set.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $Widget = Elm.Widget.make(_elm);
+   var _op = {};
+   var step = F2(function (op,lst) {
+      var _p0 = op;
+      if (_p0.ctor === "SelectVehicle") {
+            var _p1 = _p0._0;
+            var sel = _p0._1 ? A2($Set.insert,_p1,lst) : A2($Set.remove,
+            _p1,
+            lst);
+            return sel;
+         } else {
+            return lst;
+         }
+   });
+   var tailSg = function () {
+      var wrap = function (_p2) {
+         var _p3 = _p2;
+         var pct_ = $Basics.round(A2($Exts$Float.roundTo,
+         2,
+         _p3._1) * 120);
+         var pct__ = pct_ - A2($Basics._op["%"],pct_,5);
+         var title = A3($Html.toElement,
+         160,
+         40,
+         A2($Html.span,
+         _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
+                                                  ,_0: "padding-left"
+                                                  ,_1: "20px"}
+                                                 ,{ctor: "_Tuple2",_0: "font-weight",_1: "bold"}
+                                                 ,{ctor: "_Tuple2",_0: "font-size",_1: "large"}]))]),
+         _U.list([$Html.text(A2($Basics._op["++"],
+         "Tail: ",
+         A2($Basics._op["++"],$Basics.toString(pct__)," minutes")))])));
+         var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
+         A2($Graphics$Element.beside,
+         A2($Graphics$Element.spacer,20,1),
+         _p3._0),
+         title)]));
+         return {ctor: "_Tuple2",_0: wrappedSlider,_1: pct__};
+      };
+      return A2($Signal.map,wrap,A2($Widget.slider,120,0.5));
+   }();
+   var mapAlphaSg = function () {
+      var wrap = function (_p4) {
+         var _p5 = _p4;
+         var pct_ = A2($Exts$Float.roundTo,2,_p5._1);
+         var title = A3($Html.toElement,
+         160,
+         40,
+         A2($Html.span,
+         _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
+                                                  ,_0: "padding-left"
+                                                  ,_1: "20px"}
+                                                 ,{ctor: "_Tuple2",_0: "font-weight",_1: "bold"}
+                                                 ,{ctor: "_Tuple2",_0: "font-size",_1: "large"}]))]),
+         _U.list([$Html.text(A2($Basics._op["++"],
+         "Map Alpha: ",
+         $Basics.toString(pct_)))])));
+         var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
+         A2($Graphics$Element.beside,
+         A2($Graphics$Element.spacer,20,1),
+         _p5._0),
+         title)]));
+         return {ctor: "_Tuple2",_0: wrappedSlider,_1: pct_};
+      };
+      return A2($Signal.map,wrap,A2($Widget.slider,120,0.8));
+   }();
+   var traceAlphaSg = function () {
+      var wrap = function (_p6) {
+         var _p7 = _p6;
+         var pct_ = A2($Exts$Float.roundTo,1,_p7._1);
+         var title = A3($Html.toElement,
+         160,
+         40,
+         A2($Html.span,
+         _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
+                                                  ,_0: "padding-left"
+                                                  ,_1: "20px"}
+                                                 ,{ctor: "_Tuple2",_0: "font-weight",_1: "bold"}
+                                                 ,{ctor: "_Tuple2",_0: "font-size",_1: "large"}]))]),
+         _U.list([$Html.text(A2($Basics._op["++"],
+         "Trace Alpha: ",
+         $Basics.toString(pct_)))])));
+         var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
+         A2($Graphics$Element.beside,
+         A2($Graphics$Element.spacer,20,1),
+         _p7._0),
+         title)]));
+         return {ctor: "_Tuple2",_0: wrappedSlider,_1: pct_};
+      };
+      return A2($Signal.map,wrap,A2($Widget.slider,120,0.1));
+   }();
+   var Nil = {ctor: "Nil"};
+   var vehicleOps = $Signal.mailbox(Nil);
+   var vehicleListSg = A3($Signal.foldp,
+   step,
+   $Set.fromList(_U.list([2012347
+                         ,2017231
+                         ,2030413
+                         ,2036207
+                         ,2026201])),
+   vehicleOps.signal);
    var SelectVehicle = F2(function (a,b) {
       return {ctor: "SelectVehicle",_0: a,_1: b};
    });
@@ -18310,10 +18250,10 @@ Elm.Main.make = function (_elm) {
                              ,A3($Html$Events.on,
                              "change",
                              $Html$Events.targetChecked,
-                             function (_p13) {
+                             function (_p8) {
                                 return A2($Signal.message,
-                                opFlow.address,
-                                A2(SelectVehicle,vid,_p13));
+                                vehicleOps.address,
+                                A2(SelectVehicle,vid,_p8));
                              })]),
                      _U.list([]))
                      ,A2($Html.span,
@@ -18325,17 +18265,20 @@ Elm.Main.make = function (_elm) {
                      ,A2($Html.br,_U.list([]),_U.list([]))]);
    });
    var checkBoxes = function (vlist) {
-      return A2($Html.div,
+      return A3($Html.toElement,
+      160,
+      200,
+      A2($Html.div,
       _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
-                                               ,_0: "background-color"
-                                               ,_1: "rgba(255, 255, 255, 0.9)"}]))]),
+                                               ,_0: "padding-left"
+                                               ,_1: "20px"}]))]),
       A2($List._op["::"],
       A2($Html.span,
       _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
                                                ,_0: "font-size"
                                                ,_1: "x-large"}
                                               ,{ctor: "_Tuple2",_0: "font-weight",_1: "bold"}]))]),
-      _U.list([$Html.text("Select vehicles")])),
+      _U.list([$Html.text("Vehicles")])),
       A2($List._op["::"],
       A2($Html.br,_U.list([]),_U.list([])),
       A2($List._op["::"],
@@ -18368,184 +18311,193 @@ Elm.Main.make = function (_elm) {
       A2($Set.member,2026201,vlist),
       2026201,
       "  #26201",
-      "darkGreen")))))))));
+      "darkGreen"))))))))));
    };
-   var Buff = function (a) {    return {ctor: "Buff",_0: a};};
-   var Tick = function (a) {    return {ctor: "Tick",_0: a};};
+   return _elm.VehicleControl.values = {_op: _op
+                                       ,SelectVehicle: SelectVehicle
+                                       ,Nil: Nil
+                                       ,vehicleOps: vehicleOps
+                                       ,traceAlphaSg: traceAlphaSg
+                                       ,mapAlphaSg: mapAlphaSg
+                                       ,tailSg: tailSg
+                                       ,checkBoxes: checkBoxes
+                                       ,checkbox: checkbox
+                                       ,step: step
+                                       ,vehicleListSg: vehicleListSg};
+};
+Elm.Main = Elm.Main || {};
+Elm.Main.make = function (_elm) {
+   "use strict";
+   _elm.Main = _elm.Main || {};
+   if (_elm.Main.values) return _elm.Main.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Color = Elm.Color.make(_elm),
+   $Data = Elm.Data.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Drag = Elm.Drag.make(_elm),
+   $FontAwesome = Elm.FontAwesome.make(_elm),
+   $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
+   $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $Graphics$Input = Elm.Graphics.Input.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $Html$Attributes = Elm.Html.Attributes.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Set = Elm.Set.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $Signal$Extra = Elm.Signal.Extra.make(_elm),
+   $Text = Elm.Text.make(_elm),
+   $TileMap = Elm.TileMap.make(_elm),
+   $Time = Elm.Time.make(_elm),
+   $VehicleControl = Elm.VehicleControl.make(_elm),
+   $VideoControl = Elm.VideoControl.make(_elm);
+   var _op = {};
+   var trans = F2(function (op,mapp) {
+      var _p0 = op;
+      _v0_3: do {
+         switch (_p0.ctor)
+         {case "Zoom": return A2($TileMap.zoom,mapp,_p0._0);
+            case "Pan": if (_p0._0.ctor === "_Tuple2") {
+                    return A2($TileMap.panPx,
+                    mapp,
+                    {ctor: "_Tuple2",_0: _p0._0._0,_1: _p0._0._1});
+                 } else {
+                    break _v0_3;
+                 }
+            case "Size": if (_p0._0.ctor === "_Tuple2") {
+                    return _U.update(mapp,
+                    {size: {ctor: "_Tuple2",_0: _p0._0._0,_1: _p0._0._1}});
+                 } else {
+                    break _v0_3;
+                 }
+            default: break _v0_3;}
+      } while (false);
+      return mapp;
+   });
+   var shadowFlow = $Signal.mailbox(false);
    var NoOp = {ctor: "NoOp"};
+   var mapOps = $Signal.mailbox(NoOp);
    var Size = function (a) {    return {ctor: "Size",_0: a};};
    var Pan = function (a) {    return {ctor: "Pan",_0: a};};
    var Zoom = function (a) {    return {ctor: "Zoom",_0: a};};
-   var ops = function () {
-      var inject = function (gps) {
-         return Buff(A4($List.map3,
-         F3(function (x,y,z) {    return A3(parseGps,x,y,z);}),
-         gps,
-         global_colors,
-         global_icons));
-      };
-      var buff = A2($Signal$Extra._op["<~"],inject,vehicleIn);
-      var clock_ = A2($Signal$Extra._op["<~"],Tick,$Time.fps(25));
-      var mouseDrag = F2(function (evt,flag) {
-         if (flag) return NoOp; else {
-               var _p14 = evt;
-               if (_p14.ctor === "MoveFromTo" && _p14._0.ctor === "_Tuple2" && _p14._1.ctor === "_Tuple2")
-               {
-                     return Pan({ctor: "_Tuple2"
-                                ,_0: _p14._1._0 - _p14._0._0
-                                ,_1: _p14._1._1 - _p14._0._1});
-                  } else {
-                     return NoOp;
-                  }
+   var MouseWheel = F2(function (a,b) {
+      return {pos: a,delta: b};
+   });
+   var showTrace = F4(function (_p1,t,tcLength,mapp) {
+      var _p2 = _p1;
+      var _p6 = _p2._2;
+      var trace = $List.reverse(A2($List.filter,
+      function (g) {
+         return _U.cmp(g.timestamp,t) < 0 && _U.cmp(t - g.timestamp,
+         (_U.eq(tcLength,0) ? 24 : tcLength) * 60000) < 1;
+      },
+      _p2._5));
+      var head = function () {
+         var _p3 = $List.head(trace);
+         if (_p3.ctor === "Just") {
+               var _p5 = _p3._0;
+               var _p4 = A2($TileMap.proj,
+               {ctor: "_Tuple2",_0: _p5.lat,_1: _p5.lon},
+               mapp);
+               var x = _p4._0;
+               var y = _p4._1;
+               var p = A2($Graphics$Collage.move,
+               {ctor: "_Tuple2",_0: x,_1: y},
+               _p2._3);
+               var n = A2($Graphics$Collage.move,
+               {ctor: "_Tuple2",_0: x + 40,_1: y + 20},
+               A2($Graphics$Collage.outlinedText,
+               _U.update($Graphics$Collage.defaultLine,{width: 1,color: _p6}),
+               $Text.fromString(_p2._1)));
+               return $Graphics$Collage.group(_U.list([p,n]));
+            } else {
+               return $Graphics$Collage.toForm($Graphics$Element.empty);
             }
-      });
-      var pan = A3($Signal.map2,
-      mouseDrag,
-      $Drag.mouseEvents,
-      shadowFlow.signal);
-      var hover = $Signal.mailbox(false);
-      var sizing = A2($Signal$Extra._op["<~"],
+      }();
+      var hstE = _U.eq(tcLength,
+      0) ? $Graphics$Collage.toForm($Graphics$Element.empty) : A3($TileMap.path,
+      trace,
+      mapp,
+      _U.update($Graphics$Collage.defaultLine,
+      {color: _p6,width: 6,dashing: _U.list([8,4])}));
+      return $Graphics$Collage.group(_U.list([head,hstE]));
+   });
+   var render = F7(function (mapp,
+   _p10,
+   data,
+   _p9,
+   _p8,
+   _p7,
+   vehicleList) {
+      var _p11 = _p10;
+      var _p12 = _p9;
+      var _p13 = _p8;
+      var _p14 = _p7;
+      var checkBoxes_ = $VehicleControl.checkBoxes(vehicleList);
+      var bck = A2($Graphics$Element.opacity,
+      0.85,
+      A2($Graphics$Element.color,
+      $Color.white,
+      A2($Graphics$Element.spacer,160,500)));
+      var vehicleStateView = $Graphics$Element.layers(_U.list([bck
+                                                              ,A2($Graphics$Element.below,
+                                                              A2($Graphics$Element.below,
+                                                              A2($Graphics$Element.below,
+                                                              A2($Graphics$Element.below,
+                                                              A2($Graphics$Element.below,
+                                                              A2($Graphics$Element.below,
+                                                              _p13._0,
+                                                              A2($Graphics$Element.spacer,1,30)),
+                                                              _p14._0),
+                                                              A2($Graphics$Element.spacer,1,30)),
+                                                              _p12._0),
+                                                              A2($Graphics$Element.spacer,1,30)),
+                                                              checkBoxes_)]));
+      var filteredTraces = A2($List.filter,
       function (_p15) {
          var _p16 = _p15;
-         return Size({ctor: "_Tuple2",_0: _p16._0,_1: _p16._1});
+         return A2($Set.member,_p16._0,vehicleList);
       },
-      screenSizeIn);
-      var level = function (x) {
-         return _U.cmp(x,0) < 0 ? -1 : _U.eq(x,0) ? 0 : 1;
-      };
-      var zooms = A2($Signal$Extra._op["<~"],
-      function (ms) {
-         return Zoom(level(ms.delta));
-      },
-      mouseWheelIn);
-      return $Signal.mergeMany(_U.list([zooms
-                                       ,sizing
-                                       ,pan
-                                       ,clock_
-                                       ,buff
-                                       ,opFlow.signal]));
-   }();
-   var Nil = {ctor: "Nil"};
-   var BaseMap = {ctor: "BaseMap"};
-   var Slider = {ctor: "Slider"};
-   var State = F6(function (a,b,c,d,e,f) {
-      return {trace: a
-             ,map: b
-             ,clock: c
-             ,vehicleList: d
-             ,traceLength: e
-             ,videoStatus: f};
-   });
-   var Stop = {ctor: "Stop"};
-   var Pause = {ctor: "Pause"};
-   var Playing = {ctor: "Playing"};
-   var trans = F2(function (op,state) {
-      var _p17 = op;
-      _v7_10: do {
-         switch (_p17.ctor)
-         {case "Zoom": return _U.update(state,
-              {map: A2($TileMap.zoom,state.map,_p17._0)});
-            case "TraceLength": return _U.update(state,
-              {traceLength: _p17._0});
-            case "Pan": if (_p17._0.ctor === "_Tuple2") {
-                    return _U.update(state,
-                    {map: A2($TileMap.panPx,
-                    state.map,
-                    {ctor: "_Tuple2",_0: _p17._0._0,_1: _p17._0._1})});
-                 } else {
-                    break _v7_10;
-                 }
-            case "Size": if (_p17._0.ctor === "_Tuple2") {
-                    var map_ = state.map;
-                    return _U.update(state,
-                    {map: _U.update(map_,
-                    {size: {ctor: "_Tuple2",_0: _p17._0._0,_1: _p17._0._1}})});
-                 } else {
-                    break _v7_10;
-                 }
-            case "Tick": var isVideoDone = A2($Animation.isDone,
-              state.clock,
-              global_animation);
-              return _U.eq(state.videoStatus,
-              Playing) && $Basics.not(isVideoDone) ? _U.update(state,
-              {clock: state.clock + _p17._0}) : isVideoDone ? _U.update(state,
-              {videoStatus: Stop,clock: 0}) : state;
-            case "SelectVehicle": var _p18 = _p17._0;
-              var sel = _p17._1 ? A2($Set.insert,
-              _p18,
-              state.vehicleList) : A2($Set.remove,_p18,state.vehicleList);
-              return _U.update(state,{vehicleList: sel});
-            case "Buff": return _U.update(state,{trace: _p17._0});
-            case "PlayVideo": return _U.update(state,
-              {videoStatus: Playing});
-            case "StopVideo": return _U.update(state,
-              {videoStatus: Stop,clock: 0});
-            case "PauseVideo": return _U.update(state,{videoStatus: Pause});
-            default: break _v7_10;}
-      } while (false);
-      return state;
-   });
-   var states = function () {
-      var initMap = {size: {ctor: "_Tuple2"
-                           ,_0: $TileMap.tileSize
-                           ,_1: $TileMap.tileSize}
-                    ,center: {ctor: "_Tuple2",_0: 43.83488,_1: -79.5257}
-                    ,zoom: 13};
-      var initState = {trace: _U.list([])
-                      ,map: initMap
-                      ,clock: 0
-                      ,vehicleList: $Set.fromList(_U.list([2012347
-                                                          ,2017231
-                                                          ,2030413
-                                                          ,2036207
-                                                          ,2026201]))
-                      ,traceLength: 1
-                      ,videoStatus: Stop};
-      return A3($Signal.foldp,trans,initState,ops);
-   }();
-   var render = F2(function (state,_p19) {
-      var _p20 = _p19;
-      var isPlaying = _U.eq(state.videoStatus,Playing);
-      var t = A2($Animation.animate,state.clock,global_animation);
-      var filteredTraces = A2($List.filter,
-      function (_p21) {
-         var _p22 = _p21;
-         return A2($Set.member,_p22._0,state.vehicleList);
-      },
-      state.trace);
-      var tc = $Graphics$Collage.group(A2($List.map,
+      data);
+      var vehicleTrace = $Graphics$Collage.group(A2($List.map,
       function (vtrace) {
-         return A4(showTrace,vtrace,t,state.traceLength,state.map);
+         return A4(showTrace,vtrace,_p11._0,_p14._1,mapp);
       },
       filteredTraces));
-      var baseMap = $TileMap.loadMap(state.map);
-      var h = $Basics.snd(state.map.size);
-      var w = $Basics.fst(state.map.size);
-      var tbox = A2($Graphics$Collage.move,
+      var fullTrace = A2($Graphics$Collage.alpha,
+      _p12._1,
+      $Graphics$Collage.group(A2($List.map,
+      function (_p17) {
+         var _p18 = _p17;
+         return _p18._4;
+      },
+      filteredTraces)));
+      var baseMap = $TileMap.loadMap(mapp);
+      var h = $Basics.snd(mapp.size);
+      var progressBar_ = A2($Graphics$Collage.move,
       {ctor: "_Tuple2",_0: 0,_1: 40 - $Basics.toFloat(h) / 2},
-      $Graphics$Collage.toForm(A4(videoControl,w,40,t,isPlaying)));
-      var cboxes = A2($Graphics$Collage.move,
+      $Graphics$Collage.toForm(_p11._1));
+      var w = $Basics.fst(mapp.size);
+      var clockWidgt_ = A2($Graphics$Collage.move,
       {ctor: "_Tuple2"
-      ,_0: 140 - $Basics.toFloat(w) / 2
-      ,_1: $Basics.toFloat(h) / 2 - 180},
-      $Graphics$Collage.toForm(A3($Html.toElement,
-      240,
-      200,
-      checkBoxes(state.vehicleList))));
-      var radios = A2($Graphics$Collage.move,
+      ,_0: $Basics.toFloat(w) / 2 - 80
+      ,_1: $Basics.toFloat(h) / 2 - 160},
+      $Graphics$Collage.toForm(_p11._2));
+      var vehicleStateView_ = A2($Graphics$Collage.move,
       {ctor: "_Tuple2"
       ,_0: 140 - $Basics.toFloat(w) / 2
       ,_1: $Basics.toFloat(h) / 2 - 380},
-      $Graphics$Collage.toForm(A3($Html.toElement,
-      240,
-      200,
-      traceLength(state.traceLength))));
+      $Graphics$Collage.toForm(A2($Graphics$Input.hoverable,
+      $Signal.message(shadowFlow.address),
+      vehicleStateView)));
       var gitLink = function () {
          var b = A2($Graphics$Element.opacity,
-         0.9,
+         0.85,
          A2($Graphics$Element.color,
          $Color.white,
-         A2($Graphics$Element.spacer,240,70)));
+         A2($Graphics$Element.spacer,240,40)));
          var a = $Graphics$Element.leftAligned(A2($Text.height,
          22,
          A2($Text.link,
@@ -18554,17 +18506,14 @@ Elm.Main.make = function (_elm) {
          return A2($Graphics$Collage.move,
          {ctor: "_Tuple2"
          ,_0: 140 - $Basics.toFloat(w) / 2
-         ,_1: $Basics.toFloat(h) / 2 - 680},
+         ,_1: $Basics.toFloat(h) / 2 - 780},
          $Graphics$Collage.toForm($Graphics$Element.layers(_U.list([b
-                                                                   ,A2($Graphics$Element.above,
-                                                                   A2($Graphics$Element.spacer,1,20),
-                                                                   a)]))));
+                                                                   ,A2($Graphics$Element.below,
+                                                                   A2($Graphics$Element.beside,
+                                                                   A2($Graphics$Element.spacer,20,1),
+                                                                   a),
+                                                                   A2($Graphics$Element.spacer,1,10))]))));
       }();
-      var clockE = A2($Graphics$Collage.move,
-      {ctor: "_Tuple2"
-      ,_0: $Basics.toFloat(w) / 2 - 80
-      ,_1: $Basics.toFloat(h) / 2 - 160},
-      $Graphics$Collage.toForm(clocky(t)));
       var title = A2($Graphics$Collage.move,
       {ctor: "_Tuple2"
       ,_0: 380 - $Basics.toFloat(w) / 2
@@ -18578,72 +18527,154 @@ Elm.Main.make = function (_elm) {
                                                ,_1: "blue"}
                                               ,{ctor: "_Tuple2",_0: "font-size",_1: "xx-large"}]))]),
       _U.list([$Html.text("Map Visualization with ELM: 5 Vehicles in 24 Hours")])))));
-      var slidE = A2($Graphics$Collage.move,
-      {ctor: "_Tuple2"
-      ,_0: 140 - $Basics.toFloat(w) / 2
-      ,_1: $Basics.toFloat(h) / 2 - 510},
-      _p20._0);
       return A3($Graphics$Collage.collage,
       w,
       h,
       _U.list([A2($Graphics$Collage.alpha,
-              _p20._1,
+              _p13._1,
               $Graphics$Collage.toForm(baseMap))
-              ,tc
-              ,tbox
-              ,clockE
-              ,cboxes
-              ,radios
+              ,fullTrace
+              ,vehicleTrace
               ,title
               ,gitLink
-              ,slidE]));
+              ,clockWidgt_
+              ,progressBar_
+              ,vehicleStateView_]));
    });
-   var main = A3($Signal.map2,render,states,slider(80));
-   var MouseWheel = F2(function (a,b) {
-      return {pos: a,delta: b};
+   var global_icons = _U.list([$FontAwesome.truck
+                              ,$FontAwesome.ambulance
+                              ,$FontAwesome.taxi
+                              ,$FontAwesome.motorcycle
+                              ,$FontAwesome.bus]);
+   var global_colors = _U.list([$Color.red
+                               ,$Color.blue
+                               ,$Color.brown
+                               ,$Color.orange
+                               ,$Color.darkGreen]);
+   var screenSizeIn = Elm.Native.Port.make(_elm).inboundSignal("screenSizeIn",
+   "( Int, Int )",
+   function (v) {
+      return typeof v === "object" && v instanceof Array ? {ctor: "_Tuple2"
+                                                           ,_0: typeof v[0] === "number" && isFinite(v[0]) && Math.floor(v[0]) === v[0] ? v[0] : _U.badPort("an integer",
+                                                           v[0])
+                                                           ,_1: typeof v[1] === "number" && isFinite(v[1]) && Math.floor(v[1]) === v[1] ? v[1] : _U.badPort("an integer",
+                                                           v[1])} : _U.badPort("an array",v);
    });
+   var mouseWheelIn = Elm.Native.Port.make(_elm).inboundSignal("mouseWheelIn",
+   "Main.MouseWheel",
+   function (v) {
+      return typeof v === "object" && "pos" in v && "delta" in v ? {_: {}
+                                                                   ,pos: typeof v.pos === "object" && v.pos instanceof Array ? {ctor: "_Tuple2"
+                                                                                                                               ,_0: typeof v.pos[0] === "number" && isFinite(v.pos[0]) && Math.floor(v.pos[0]) === v.pos[0] ? v.pos[0] : _U.badPort("an integer",
+                                                                                                                               v.pos[0])
+                                                                                                                               ,_1: typeof v.pos[1] === "number" && isFinite(v.pos[1]) && Math.floor(v.pos[1]) === v.pos[1] ? v.pos[1] : _U.badPort("an integer",
+                                                                                                                               v.pos[1])} : _U.badPort("an array",
+                                                                   v.pos)
+                                                                   ,delta: typeof v.delta === "number" && isFinite(v.delta) && Math.floor(v.delta) === v.delta ? v.delta : _U.badPort("an integer",
+                                                                   v.delta)} : _U.badPort("an object with fields `pos`, `delta`",
+      v);
+   });
+   var ops = function () {
+      var mouseDrag = F2(function (evt,flag) {
+         if (flag) return NoOp; else {
+               var _p19 = evt;
+               if (_p19.ctor === "MoveFromTo" && _p19._0.ctor === "_Tuple2" && _p19._1.ctor === "_Tuple2")
+               {
+                     return Pan({ctor: "_Tuple2"
+                                ,_0: _p19._1._0 - _p19._0._0
+                                ,_1: _p19._1._1 - _p19._0._1});
+                  } else {
+                     return NoOp;
+                  }
+            }
+      });
+      var pan = A3($Signal.map2,
+      mouseDrag,
+      $Drag.mouseEvents,
+      shadowFlow.signal);
+      var sizing = A2($Signal$Extra._op["<~"],
+      function (_p20) {
+         var _p21 = _p20;
+         return Size({ctor: "_Tuple2",_0: _p21._0,_1: _p21._1});
+      },
+      screenSizeIn);
+      var level = function (x) {
+         return _U.cmp(x,0) < 0 ? -1 : _U.eq(x,0) ? 0 : 1;
+      };
+      var zooms = A2($Signal$Extra._op["<~"],
+      function (ms) {
+         return Zoom(level(ms.delta));
+      },
+      mouseWheelIn);
+      return $Signal.mergeMany(_U.list([zooms,sizing,pan]));
+   }();
+   var mapSg = function () {
+      var initMap = {size: {ctor: "_Tuple2"
+                           ,_0: $TileMap.tileSize
+                           ,_1: $TileMap.tileSize}
+                    ,center: {ctor: "_Tuple2",_0: 43.83488,_1: -79.5257}
+                    ,zoom: 13};
+      return A3($Signal.foldp,trans,initMap,ops);
+   }();
+   var vehicleIn = Elm.Native.Port.make(_elm).inboundSignal("vehicleIn",
+   "List\n    (\n    List\n        ( Int\n        , String\n        , Float\n        , Float\n        , Float\n        , Float\n        )\n    )",
+   function (v) {
+      return typeof v === "object" && v instanceof Array ? Elm.Native.List.make(_elm).fromArray(v.map(function (v) {
+         return typeof v === "object" && v instanceof Array ? Elm.Native.List.make(_elm).fromArray(v.map(function (v) {
+            return typeof v === "object" && v instanceof Array ? {ctor: "_Tuple6"
+                                                                 ,_0: typeof v[0] === "number" && isFinite(v[0]) && Math.floor(v[0]) === v[0] ? v[0] : _U.badPort("an integer",
+                                                                 v[0])
+                                                                 ,_1: typeof v[1] === "string" || typeof v[1] === "object" && v[1] instanceof String ? v[1] : _U.badPort("a string",
+                                                                 v[1])
+                                                                 ,_2: typeof v[2] === "number" ? v[2] : _U.badPort("a number",
+                                                                 v[2])
+                                                                 ,_3: typeof v[3] === "number" ? v[3] : _U.badPort("a number",
+                                                                 v[3])
+                                                                 ,_4: typeof v[4] === "number" ? v[4] : _U.badPort("a number",
+                                                                 v[4])
+                                                                 ,_5: typeof v[5] === "number" ? v[5] : _U.badPort("a number",
+                                                                 v[5])} : _U.badPort("an array",v);
+         })) : _U.badPort("an array",v);
+      })) : _U.badPort("an array",v);
+   });
+   var dataSg = A3($Signal.map2,
+   F2(function (gps,mapp) {
+      return A4($List.map3,
+      F3(function (x,y,z) {
+         return A4($Data.parseGps,x,y,z,mapp);
+      }),
+      gps,
+      global_colors,
+      global_icons);
+   }),
+   vehicleIn,
+   mapSg);
+   var main = A4($Signal.map3,
+   F3(function (x,y,z) {    return A2(x,y,z);}),
+   A6($Signal.map5,
+   render,
+   mapSg,
+   $VideoControl.videoSg,
+   dataSg,
+   $VehicleControl.traceAlphaSg,
+   $VehicleControl.mapAlphaSg),
+   $VehicleControl.tailSg,
+   $VehicleControl.vehicleListSg);
    return _elm.Main.values = {_op: _op
+                             ,global_colors: global_colors
+                             ,global_icons: global_icons
+                             ,dataSg: dataSg
+                             ,render: render
+                             ,showTrace: showTrace
+                             ,main: main
                              ,MouseWheel: MouseWheel
-                             ,Playing: Playing
-                             ,Pause: Pause
-                             ,Stop: Stop
-                             ,State: State
-                             ,Slider: Slider
-                             ,BaseMap: BaseMap
-                             ,Nil: Nil
                              ,Zoom: Zoom
                              ,Pan: Pan
                              ,Size: Size
                              ,NoOp: NoOp
-                             ,Tick: Tick
-                             ,Buff: Buff
-                             ,SelectVehicle: SelectVehicle
-                             ,TraceLength: TraceLength
-                             ,PlayVideo: PlayVideo
-                             ,StopVideo: StopVideo
-                             ,PauseVideo: PauseVideo
-                             ,MoveSlider: MoveSlider
-                             ,NoOp_0: NoOp_0
-                             ,global_tzone: global_tzone
-                             ,global_t0: global_t0
-                             ,global_t1: global_t1
-                             ,global_colors: global_colors
-                             ,global_icons: global_icons
-                             ,opFlow: opFlow
+                             ,mapOps: mapOps
                              ,shadowFlow: shadowFlow
-                             ,global_animation: global_animation
-                             ,slider: slider
                              ,ops: ops
                              ,trans: trans
-                             ,states: states
-                             ,render: render
-                             ,showTrace: showTrace
-                             ,main: main
-                             ,videoControl: videoControl
-                             ,parseGps: parseGps
-                             ,clocky: clocky
-                             ,checkBoxes: checkBoxes
-                             ,checkbox: checkbox
-                             ,traceLength: traceLength
-                             ,radio: radio};
+                             ,mapSg: mapSg};
 };

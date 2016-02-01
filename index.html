@@ -16,9 +16,9 @@
         function init() {
             var div = document.getElementById('map');
             elmCtx = Elm.embed(Elm.Main, div, 
-                {mouseWheelIn: {pos:[0, 0], delta : 0},
-                 screenSizeIn: [div.offsetWidth, div.offsetHeight],
-                 vehicleIn:[]
+                {mouseWheelIn: {pos:[0, 0], delta : 0}
+                 , screenSizeIn: [div.offsetWidth, div.offsetHeight]
+                 , vehicleIn:[]
                 });
             div.addEventListener("wheel", zoom);
             elmCtx.ports.screenSizeIn.send([div.offsetWidth, div.offsetHeight]);
