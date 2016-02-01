@@ -51,7 +51,7 @@ render  mapp (t, progressBar, clockWidgt) data (traceAlpha, talpha) (mapAlpha, m
                     b = spacer 240 40 |> color white |> opacity 0.85
                 in
                     layers [b, (spacer 20 1) `beside` a `below` (spacer 1 10)] |> toForm |> move (140 - (toFloat w)/2, (toFloat h)/2 - 780)
-        title = Html.span [style [("color", "blue"), ("font-size", "xx-large")]] [Html.text "Map Visualization with ELM: 5 Vehicles in 24 Hours"] 
+        title = Html.span [style [("color", "blue"), ("font-size", "xx-large")]] [Html.text "GPS Visualization with ELM: 5 Vehicles in 24 Hours"] 
                 |> Html.toElement 700 60 |> toForm |> move (380 - (toFloat w)/2,  (toFloat h)/2 - 40)
     in
         collage w h [toForm baseMap |> alpha malpha, fullTrace, vehicleTrace, title, gitLink, clockWidgt_, progressBar_, vehicleStateView_]
