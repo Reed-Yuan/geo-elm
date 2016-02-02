@@ -47,7 +47,7 @@ render  mapp (t, progressBar, anologClock, digitClock) data (traceAlpha, talpha)
         bck = spacer 160 500 |> color white |> opacity 0.85
         checkBoxes_ = checkBoxes vehicleList
         vehicleStateView = layers [bck, mapAlpha `below` (spacer 1 30) `below` tailLength `below` (spacer 1 30) `below` traceAlpha `below` (spacer 1 30) `below` checkBoxes_]
-        vehicleStateView_ = vehicleStateView |> Graphics.Input.hoverable (Signal.message shadowFlow.address) |> toForm |> move (140 - (toFloat w)/2, (toFloat h)/2 - 380)
+        vehicleStateView_ = vehicleStateView |> Graphics.Input.hoverable (Signal.message shadowFlow.address) |> toForm |> move (100 - (toFloat w)/2, (toFloat h)/2 - 380)
         gitLink =
                 let
                     a = Text.fromString "Source code @GitHub" |> Text.link "https://github.com/Reed-Yuan/geo-elm.git" |> Text.height 22 |> leftAligned

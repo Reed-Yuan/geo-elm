@@ -18880,7 +18880,7 @@ Elm.Main.make = function (_elm) {
       $Basics.snd(traceWithInfo))));
       var vehicleStateView_ = A2($Graphics$Collage.move,
       {ctor: "_Tuple2"
-      ,_0: 140 - $Basics.toFloat(w) / 2
+      ,_0: 100 - $Basics.toFloat(w) / 2
       ,_1: $Basics.toFloat(h) / 2 - 380},
       $Graphics$Collage.toForm(A2($Graphics$Input.hoverable,
       $Signal.message($MapControl.shadowFlow.address),
