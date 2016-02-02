@@ -29,7 +29,7 @@ slider width initValue =
                 merge flag msEvt =
                     if flag then
                         case msEvt of
-                            MoveFromTo (x0,y0) (x1, y1) -> (x1 - x0)
+                            MoveFromTo (x0,y0) (x1, y1) -> let d = Debug.log "(x0,y0) (x1, y1)" ((x0,y0), (x1, y1)) in (x1 - x0)
                             _ -> 0
                     else 0
             in

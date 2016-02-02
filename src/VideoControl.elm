@@ -59,7 +59,7 @@ trans op state =
         StopVideo -> {state | videoStatus = Stop, clock = 0}
         PauseVideo -> {state | videoStatus = Pause}
 
-videoStateSg = Signal.foldp trans (State 0 Stop) ops
+videoStateSg = Signal.foldp trans (State 0 Playing) ops
 
 videoControl t isPlaying =
     let
@@ -87,11 +87,10 @@ clockk t =
         hand_mm = segment (0,0) (fromPolar (50, degrees (90 - 6 * inSeconds t/60))) |> traced { defaultLine | width = 5, color = blue }
         hand_hh = segment (0,0) (fromPolar (35, degrees (90 - 6 * inSeconds t/720))) |> traced { defaultLine | width = 8, color = green }
         clk = Graphics.Collage.group [face, outline_, hand_mm, hand_hh] |> moveX -20
-        d = Date.fromTime (t - global_tzone) |> Date.Format.format Date.Config.Config_en_us.config "%H:%M:%S"
         dTxt = Html.span [style [("padding", "4px 20px 4px 20px"), ("color", "blue"), ("font-size", "xx-large"), ("background-color", "rgba(255, 255, 255, 0.9)")]] 
-                [Html.text d] |> Html.toElement 180 60 |> toForm |> moveY -120
+                [Html.text (timeToString t)] |> Html.toElement 180 60
     in
-        Graphics.Collage.collage 200 300 [clk, dTxt]  
+       (clk, dTxt)
 
 videoSg = 
     let
@@ -100,9 +99,9 @@ videoSg =
                 t = animate state.clock global_animation
                 isPlaying = state.videoStatus == Playing
                 progressBar = videoControl t isPlaying
-                clockWidgt = clockk t
+                (anologClock, digitClock) = clockk t
             in
-                (t, progressBar, clockWidgt)
+                (t, progressBar, anologClock, digitClock)
     in
         Signal.map aug videoStateSg 
         

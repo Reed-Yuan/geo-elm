@@ -26,7 +26,7 @@ traceAlphaSg =
             in
                 (wrappedSlider, pct_)
     in
-        Signal.map wrap (Widget.slider 120 0.1) 
+        Signal.map wrap (Widget.slider 120 0) 
 
 mapAlphaSg = 
     let
@@ -39,7 +39,7 @@ mapAlphaSg =
             in
                 (wrappedSlider, pct_)
     in
-        Signal.map wrap (Widget.slider 120 0.8) 
+        Signal.map wrap (Widget.slider 120 0.6) 
         
 tailSg = 
     let
