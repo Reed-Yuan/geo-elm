@@ -10404,6 +10404,54 @@ Elm.List.Extra.make = function (_elm) {
                                    ,lift3: lift3
                                    ,lift4: lift4};
 };
+Elm.Native.Vendor = Elm.Native.Vendor || {};
+Elm.Native.Vendor.make = function(elm) {
+    elm.Native = elm.Native || {};
+    elm.Native.Vendor = elm.Native.Vendor || {};
+    if (elm.Native.Vendor.values) return elm.Native.Vendor.values;
+
+    //  http://davidwalsh.name/vendor-prefix
+    var styles = window.getComputedStyle(document.documentElement, '');
+    var vendorPrefix = (Array.prototype.slice
+        .call(styles)
+        .join('')
+        .match(/-(moz|webkit|ms)-/) || (styles.OLink === '' && ['', 'o'])
+    )[1];
+
+    return elm.Native.Vendor.values = { prefix: vendorPrefix };
+};
+
+Elm.Vendor = Elm.Vendor || {};
+Elm.Vendor.make = function (_elm) {
+   "use strict";
+   _elm.Vendor = _elm.Vendor || {};
+   if (_elm.Vendor.values) return _elm.Vendor.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Native$Vendor = Elm.Native.Vendor.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var Unknown = {ctor: "Unknown"};
+   var O = {ctor: "O"};
+   var MS = {ctor: "MS"};
+   var Webkit = {ctor: "Webkit"};
+   var Moz = {ctor: "Moz"};
+   var prefix = _U.eq($Native$Vendor.prefix,
+   "webkit") ? Webkit : _U.eq($Native$Vendor.prefix,
+   "moz") ? Moz : _U.eq($Native$Vendor.prefix,
+   "ms") ? MS : _U.eq($Native$Vendor.prefix,"o") ? O : Unknown;
+   return _elm.Vendor.values = {_op: _op
+                               ,prefix: prefix
+                               ,Moz: Moz
+                               ,Webkit: Webkit
+                               ,MS: MS
+                               ,O: O
+                               ,Unknown: Unknown};
+};
 Elm.Native.Bitwise = {};
 Elm.Native.Bitwise.make = function(localRuntime) {
 	localRuntime.Native = localRuntime.Native || {};
@@ -11188,210 +11236,6 @@ Elm.Regex.make = function (_elm) {
                               ,Match: Match
                               ,All: All
                               ,AtMost: AtMost};
-};
-Elm.Color = Elm.Color || {};
-Elm.Color.Extra = Elm.Color.Extra || {};
-Elm.Color.Extra.make = function (_elm) {
-   "use strict";
-   _elm.Color = _elm.Color || {};
-   _elm.Color.Extra = _elm.Color.Extra || {};
-   if (_elm.Color.Extra.values) return _elm.Color.Extra.values;
-   var _U = Elm.Native.Utils.make(_elm),
-   $Basics = Elm.Basics.make(_elm),
-   $Color = Elm.Color.make(_elm),
-   $Debug = Elm.Debug.make(_elm),
-   $List = Elm.List.make(_elm),
-   $Maybe = Elm.Maybe.make(_elm),
-   $Result = Elm.Result.make(_elm),
-   $Signal = Elm.Signal.make(_elm),
-   $String = Elm.String.make(_elm);
-   var _op = {};
-   var getNextGradientStop = F2(function (currentStop,gradient) {
-      var nextStop = $List.head(gradient);
-      var _p0 = nextStop;
-      if (_p0.ctor === "Just") {
-            return {ctor: "_Tuple2"
-                   ,_0: _p0._0
-                   ,_1: A2($Maybe.withDefault,_U.list([]),$List.tail(gradient))};
-         } else {
-            return {ctor: "_Tuple2",_0: currentStop,_1: gradient};
-         }
-   });
-   var rotateHue = F2(function (angle,cl) {
-      var _p1 = $Color.toHsl(cl);
-      var hue = _p1.hue;
-      var saturation = _p1.saturation;
-      var lightness = _p1.lightness;
-      var alpha = _p1.alpha;
-      return A4($Color.hsla,
-      hue + $Basics.degrees(angle),
-      saturation,
-      lightness,
-      alpha);
-   });
-   var limit = A2($Basics.clamp,0,1);
-   var darken = F2(function (offset,cl) {
-      var _p2 = $Color.toHsl(cl);
-      var hue = _p2.hue;
-      var saturation = _p2.saturation;
-      var lightness = _p2.lightness;
-      var alpha = _p2.alpha;
-      return A4($Color.hsla,
-      hue,
-      saturation,
-      limit(lightness + offset),
-      alpha);
-   });
-   var lighten = F2(function (offset,cl) {
-      return A2(darken,0 - offset,cl);
-   });
-   var saturate = F2(function (offset,cl) {
-      var _p3 = $Color.toHsl(cl);
-      var hue = _p3.hue;
-      var saturation = _p3.saturation;
-      var lightness = _p3.lightness;
-      var alpha = _p3.alpha;
-      return A4($Color.hsla,
-      hue,
-      limit(saturation + offset),
-      lightness,
-      alpha);
-   });
-   var desaturate = F2(function (offset,cl) {
-      return A2(saturate,0 - offset,cl);
-   });
-   var interpolate = F3(function (t,i1,i2) {
-      return i1 + (i2 - i1) * t;
-   });
-   var blend = F3(function (c1,c2,t) {
-      var i = interpolate(t);
-      var c2$ = $Color.toRgb(c2);
-      var c1$ = $Color.toRgb(c1);
-      return A4($Color.rgba,
-      $Basics.round(A2(i,
-      $Basics.toFloat(c1$.red),
-      $Basics.toFloat(c2$.red))),
-      $Basics.round(A2(i,
-      $Basics.toFloat(c1$.green),
-      $Basics.toFloat(c2$.green))),
-      $Basics.round(A2(i,
-      $Basics.toFloat(c1$.blue),
-      $Basics.toFloat(c2$.blue))),
-      A2(i,c1$.alpha,c2$.alpha));
-   });
-   var calculateColor = F3(function (_p5,_p4,t) {
-      var _p6 = _p5;
-      var _p10 = _p6._0;
-      var _p9 = _p6._1;
-      var _p7 = _p4;
-      var _p8 = _p7._1;
-      return _U.eq(t,0) ? _p9 : _U.eq(t,1) ? _p8 : A3(blend,
-      _p9,
-      _p8,
-      (t - _p10) / (_p7._0 - _p10));
-   });
-   var calculateGradient = F4(function (stop1,stop2,gradient,t) {
-      if (_U.cmp($Basics.fst(stop2),t) < 0) {
-            var _p11 = A2(getNextGradientStop,stop2,gradient);
-            var stop2$ = _p11._0;
-            var gradient$ = _p11._1;
-            var stop1$ = stop2;
-            return {ctor: "_Tuple4"
-                   ,_0: stop1$
-                   ,_1: stop2$
-                   ,_2: gradient$
-                   ,_3: A3(calculateColor,stop1$,stop2$,t)};
-         } else return {ctor: "_Tuple4"
-                       ,_0: stop1
-                       ,_1: stop2
-                       ,_2: gradient
-                       ,_3: A3(calculateColor,stop1,stop2,t)};
-   });
-   var c = F2(function (t,_p12) {
-      var _p13 = _p12;
-      var _p15 = _p13._2;
-      var _p14 = A4(calculateGradient,_p13._0,_p13._1,_p15,t);
-      var stop1$ = _p14._0;
-      var stop2$ = _p14._1;
-      var gradient$ = _p14._2;
-      var color = _p14._3;
-      return {ctor: "_Tuple4"
-             ,_0: stop1$
-             ,_1: stop2$
-             ,_2: _p15
-             ,_3: A2($List._op["::"],color,_p13._3)};
-   });
-   var gradient = F2(function (stops,size) {
-      var purifiedStops = A2($List.sortBy,
-      function (_p16) {
-         var _p17 = _p16;
-         return _p17._0;
-      },
-      A2($List.filter,
-      function (_p18) {
-         var _p19 = _p18;
-         var _p20 = _p19._0;
-         return _U.cmp(_p20,0) > -1 && _U.cmp(_p20,1) < 1;
-      },
-      stops));
-      var stop1 = $List.head(purifiedStops);
-      var _p21 = stop1;
-      if (_p21.ctor === "Just") {
-            var _p25 = _p21._0;
-            var currentStops = A2($Maybe.withDefault,
-            _U.list([]),
-            $List.tail(purifiedStops));
-            var _p22 = A2(getNextGradientStop,_p25,currentStops);
-            var s2 = _p22._0;
-            var g = _p22._1;
-            var l = size - 1;
-            var stops = A2($List.map,
-            function (i) {
-               return $Basics.toFloat(i) / l;
-            },
-            _U.range(0,l));
-            return $List.reverse(function (_p23) {
-               var _p24 = _p23;
-               return _p24._3;
-            }(A3($List.foldl,
-            c,
-            {ctor: "_Tuple4",_0: _p25,_1: s2,_2: g,_3: _U.list([])},
-            stops)));
-         } else {
-            return _U.list([]);
-         }
-   });
-   var toCssString = function (cl) {
-      var la = A2($Debug.log,"cl",cl);
-      var _p26 = $Color.toRgb(cl);
-      var red = _p26.red;
-      var green = _p26.green;
-      var blue = _p26.blue;
-      var alpha = _p26.alpha;
-      var l = A2($Debug.log,
-      "c",
-      {ctor: "_Tuple4",_0: red,_1: green,_2: blue,_3: alpha});
-      var rgba = A2($String.join,
-      ",",
-      A2($List.map,
-      $Basics.toString,
-      _U.list([$Basics.toFloat(red)
-              ,$Basics.toFloat(green)
-              ,$Basics.toFloat(blue)
-              ,alpha])));
-      return A2($Basics._op["++"],
-      "rgba(",
-      A2($Basics._op["++"],rgba,")"));
-   };
-   return _elm.Color.Extra.values = {_op: _op
-                                    ,blend: blend
-                                    ,darken: darken
-                                    ,lighten: lighten
-                                    ,saturate: saturate
-                                    ,desaturate: desaturate
-                                    ,rotateHue: rotateHue
-                                    ,gradient: gradient
-                                    ,toCssString: toCssString};
 };
 Elm.Automaton = Elm.Automaton || {};
 Elm.Automaton.make = function (_elm) {
@@ -17421,6 +17265,7 @@ Elm.Utils.make = function (_elm) {
    if (_elm.Utils.values) return _elm.Utils.values;
    var _U = Elm.Native.Utils.make(_elm),
    $Basics = Elm.Basics.make(_elm),
+   $Color = Elm.Color.make(_elm),
    $Date = Elm.Date.make(_elm),
    $Date$Config$Config_en_us = Elm.Date.Config.Config_en_us.make(_elm),
    $Date$Create = Elm.Date.Create.make(_elm),
@@ -17429,8 +17274,28 @@ Elm.Utils.make = function (_elm) {
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
-   $Signal = Elm.Signal.make(_elm);
+   $Signal = Elm.Signal.make(_elm),
+   $String = Elm.String.make(_elm),
+   $Vendor = Elm.Vendor.make(_elm);
    var _op = {};
+   var toCssString = function (cl) {
+      var _p0 = $Color.toRgb(cl);
+      var red = _p0.red;
+      var green = _p0.green;
+      var blue = _p0.blue;
+      var alpha = _p0.alpha;
+      var rgba = A2($String.join,
+      ",",
+      A2($List.map,
+      $Basics.toString,
+      _U.list([$Basics.toFloat(red)
+              ,$Basics.toFloat(green)
+              ,$Basics.toFloat(blue)
+              ,alpha])));
+      return A2($Basics._op["++"],
+      "rgba(",
+      A2($Basics._op["++"],rgba,")"));
+   };
    var global_tzone = $Basics.toFloat(A2(F2(function (x,y) {
       return x - y;
    }),
@@ -17439,11 +17304,11 @@ Elm.Utils.make = function (_elm) {
    60000,
    $Date$Create.getTimezoneOffset($Date.fromTime(0)))));
    var timeFromString = function (str) {
-      return A2(F2(function (x,y) {    return x + y;}),
-      global_tzone,
-      $Date.toTime(A2($Result.withDefault,
+      var t = $Date.toTime(A2($Result.withDefault,
       $Date.fromTime(0),
-      $Date.fromString(str))));
+      $Date.fromString(str)));
+      return _U.eq($Vendor.prefix,
+      $Vendor.Webkit) ? t : t + global_tzone;
    };
    var timeToString = function (t) {
       return A3($Date$Format.format,
@@ -17454,7 +17319,8 @@ Elm.Utils.make = function (_elm) {
    return _elm.Utils.values = {_op: _op
                               ,global_tzone: global_tzone
                               ,timeFromString: timeFromString
-                              ,timeToString: timeToString};
+                              ,timeToString: timeToString
+                              ,toCssString: toCssString};
 };
 Elm.Proj = Elm.Proj || {};
 Elm.Proj.make = function (_elm) {
@@ -17957,7 +17823,6 @@ Elm.Data.make = function (_elm) {
    var _U = Elm.Native.Utils.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Color = Elm.Color.make(_elm),
-   $Color$Extra = Elm.Color.Extra.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
    $Graphics$Element = Elm.Graphics.Element.make(_elm),
@@ -18081,7 +17946,7 @@ Elm.Data.make = function (_elm) {
                $Text.fromString(_p1._1)));
                return {ctor: "_Tuple2"
                       ,_0: $Graphics$Collage.group(_U.list([p,n]))
-                      ,_1: A2(showInfo,_p4,$Color$Extra.toCssString(_p5))};
+                      ,_1: A2(showInfo,_p4,$Utils.toCssString(_p5))};
             } else {
                return {ctor: "_Tuple2"
                       ,_0: emptyForm
@@ -18360,8 +18225,8 @@ Elm.VideoControl.make = function (_elm) {
    var Stop = {ctor: "Stop"};
    var Pause = {ctor: "Pause"};
    var Playing = {ctor: "Playing"};
-   var global_t1 = $Utils.timeFromString("2016-01-12 00:00:00");
-   var global_t0 = $Utils.timeFromString("2016-01-11 00:00:00");
+   var global_t1 = $Utils.timeFromString("2016-01-12T00:00:00");
+   var global_t0 = $Utils.timeFromString("2016-01-11T00:00:00");
    var videoControl = F2(function (t,isPlaying) {
       var p = (t - global_t0) / (global_t1 - global_t0) * 600;
       var progressBar = A2($Graphics$Collage.moveX,
@@ -18508,14 +18373,7 @@ Elm.Widget.make = function (_elm) {
                   var _p0 = msEvt;
                   if (_p0.ctor === "MoveFromTo" && _p0._0.ctor === "_Tuple2" && _p0._1.ctor === "_Tuple2")
                   {
-                        var _p2 = _p0._1._0;
-                        var _p1 = _p0._0._0;
-                        var d = A2($Debug.log,
-                        "(x0,y0) (x1, y1)",
-                        {ctor: "_Tuple2"
-                        ,_0: {ctor: "_Tuple2",_0: _p1,_1: _p0._0._1}
-                        ,_1: {ctor: "_Tuple2",_0: _p2,_1: _p0._1._1}});
-                        return _p2 - _p1;
+                        return _p0._1._0 - _p0._0._0;
                      } else {
                         return 0;
                      }
@@ -18874,10 +18732,16 @@ Elm.Main.make = function (_elm) {
       $Graphics$Collage.toForm(_p4._3));
       var info = A2($Graphics$Collage.move,
       {ctor: "_Tuple2",_0: $Basics.toFloat(w) / 2 - 100,_1: 0},
-      $Graphics$Collage.toForm(A3($List.foldr,
+      $Graphics$Collage.toForm(A4($Graphics$Element.container,
+      160,
+      800,
+      A2($Graphics$Element.midTopAt,
+      $Graphics$Element.absolute(80),
+      $Graphics$Element.absolute(0)),
+      A3($List.foldr,
       $Graphics$Element.above,
       $Graphics$Element.empty,
-      $Basics.snd(traceWithInfo))));
+      $Basics.snd(traceWithInfo)))));
       var vehicleStateView_ = A2($Graphics$Collage.move,
       {ctor: "_Tuple2"
       ,_0: 100 - $Basics.toFloat(w) / 2
@@ -18930,11 +18794,11 @@ Elm.Main.make = function (_elm) {
               ,vehicleTrace
               ,info
               ,title
-              ,gitLink
               ,anologClock_
               ,digitClock_
               ,progressBar_
-              ,vehicleStateView_]));
+              ,vehicleStateView_
+              ,gitLink]));
    });
    var global_icons = _U.list([$FontAwesome.truck
                               ,$FontAwesome.ambulance

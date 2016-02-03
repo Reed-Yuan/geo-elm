@@ -21,8 +21,8 @@ import Animation exposing (..)
 
 global_animation = animation 0 |> from global_t0 |> to global_t1 |> duration (240*Time.second)
 
-global_t0 = timeFromString "2016-01-11 00:00:00"
-global_t1 = timeFromString "2016-01-12 00:00:00"
+global_t0 = Utils.timeFromString "2016-01-11T00:00:00"
+global_t1 = Utils.timeFromString "2016-01-12T00:00:00"
 
 type VideoStatus = Playing | Pause | Stop
 

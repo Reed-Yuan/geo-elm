@@ -20,11 +20,15 @@
                  , screenSizeIn: [div.offsetWidth, div.offsetHeight]
                  , vehicleIn:[]
                 });
-            div.addEventListener("wheel", zoom);
+            div.addEventListener("mousewheel", zoom);
+            div.addEventListener("DOMMouseScroll", zoom);
             elmCtx.ports.screenSizeIn.send([div.offsetWidth, div.offsetHeight]);
             elmCtx.ports.vehicleIn.send([v2012347,v2017231,v2030413,v2036207,v2026201]);
         }
         function zoom(evt) {
+        if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
+            elmCtx.ports.mouseWheelIn.send({pos : [evt.offsetX, evt.offsetY], delta : evt.detail});
+        } else
             elmCtx.ports.mouseWheelIn.send({pos : [evt.offsetX, evt.offsetY], delta : evt.wheelDelta});
         }
     </script>  

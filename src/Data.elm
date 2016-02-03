@@ -13,7 +13,6 @@ import Utils exposing (..)
 import TileMap
 import Text
 import Time exposing (..)
-import Color.Extra exposing (..)
 
 type alias VehiclTrace = (Int, String, Color, Form, Form, List TileMap.Gpsx)
 

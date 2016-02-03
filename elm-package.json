@@ -17,7 +17,8 @@
         "rluiten/elm-date-extra": "1.4.0 <= v < 1.4.1",
         "jystic/elm-font-awesome": "1.1.0 <= v < 1.1.1",
         "krisajenkins/elm-exts": "10.2.6 <= v < 10.2.7",
-        "eskimoblood/elm-color-extra": "1.0.0 <= v < 1.0.1"
+        "eskimoblood/elm-color-extra": "1.0.0 <= v < 1.0.1",
+        "coreytrampe/elm-vendor": "2.0.0 <= v < 2.0.1"
     },
     "elm-version": "0.16.0 <= v < 0.17.0"
 }

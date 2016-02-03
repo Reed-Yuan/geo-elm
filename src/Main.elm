@@ -42,7 +42,8 @@ render  mapp (t, progressBar, anologClock, digitClock) data (traceAlpha, talpha)
         progressBar_ = progressBar |> toForm |> move (0, 40 - (toFloat h)/2)
         traceWithInfo = List.map (\vtrace -> showTrace vtrace t tl mapp) filteredTraces |> List.unzip
         vehicleTrace = fst traceWithInfo |> group
-        info = (snd traceWithInfo) |> (List.foldr above  Graphics.Element.empty) |> toForm |> move ((toFloat w)/2 - 100, 0)
+        info = (snd traceWithInfo) |> (List.foldr above Graphics.Element.empty) |> container 160 800 (midTopAt (absolute 80) (absolute 0))
+                |> toForm |> move ((toFloat w)/2 - 100, 0)
         fullTrace = List.map (\(_, _, _, _, vtrace, _) -> vtrace) filteredTraces |> group |> alpha talpha
         bck = spacer 160 500 |> color white |> opacity 0.85
         checkBoxes_ = checkBoxes vehicleList
@@ -54,10 +55,11 @@ render  mapp (t, progressBar, anologClock, digitClock) data (traceAlpha, talpha)
                     b = spacer 240 40 |> color white |> opacity 0.85
                 in
                     layers [b, (spacer 20 1) `beside` a `below` (spacer 1 10)] |> toForm |> move (140 - (toFloat w)/2, (toFloat h)/2 - 780)
+                    --(toForm a) |> move (140 - (toFloat w)/2, (toFloat h)/2 - 780)
         title = Html.span [style [("color", "blue"), ("font-size", "xx-large")]] [Html.text "GPS Visualization with ELM: 5 Vehicles in 24 Hours"] 
                 |> Html.toElement 700 60 |> toForm |> move (380 - (toFloat w)/2,  (toFloat h)/2 - 40)
     in
-        collage w h [toForm baseMap |> alpha malpha, fullTrace, vehicleTrace, info, title, gitLink, anologClock_, digitClock_, progressBar_, vehicleStateView_]
+        collage w h [toForm baseMap |> alpha malpha, fullTrace, vehicleTrace, info, title, anologClock_, digitClock_, progressBar_, vehicleStateView_, gitLink]
 
 main : Signal Element
 main = Signal.map3 (\x y z -> x y z) (Signal.map5 render (mapSg mouseWheelIn screenSizeIn) VideoControl.videoSg dataSg traceAlphaSg mapAlphaSg ) tailSg vehicleListSg
