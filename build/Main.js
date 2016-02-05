@@ -18260,7 +18260,7 @@ Elm.VideoControl.make = function (_elm) {
       _U.list([$Html.text("00:00:00")])));
       var p = (t - global_t0) / (global_t1 - global_t0) * 400;
       var progress = A2($Graphics$Collage.moveX,
-      -200,
+      -220,
       A2($Graphics$Collage.traced,
       _U.update($Graphics$Collage.defaultLine,
       {width: 10,color: $Color.red}),
@@ -18268,7 +18268,7 @@ Elm.VideoControl.make = function (_elm) {
       {ctor: "_Tuple2",_0: 0,_1: 0},
       {ctor: "_Tuple2",_0: p,_1: 0})));
       var darkBar = A2($Graphics$Collage.moveX,
-      -200,
+      -220,
       A2($Graphics$Collage.traced,
       _U.update($Graphics$Collage.defaultLine,
       {width: 10,color: $Color.darkGrey}),
@@ -18312,13 +18312,13 @@ Elm.VideoControl.make = function (_elm) {
       A2($Graphics$Element.beside,
       A2($Graphics$Element.beside,
       A2($Graphics$Element.spacer,20,1),
-      icon_),
-      A2($Graphics$Element.spacer,10,1)),
       startTime),
       editIcon_1),
       progressBar),
       endTime),
       editIcon_2),
+      A2($Graphics$Element.spacer,10,1)),
+      icon_),
       A2($Graphics$Element.spacer,1,10));
       var wth = 820;
       var ht = 40;
