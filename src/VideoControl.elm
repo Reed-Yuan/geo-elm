@@ -74,15 +74,16 @@ videoControl t videoStatus =
         icon_pause = FontAwesome.pause Color.darkGreen 20 |> Html.toElement 40 20
                     |> Graphics.Input.clickable (Signal.message videoOps.address PauseVideo)
         icon_ = (if isPlaying then flow right [icon_pause, icon_stop] else flow right [icon_play, spacer 40 20])
-        darkBar = segment (0,0) (400, 0) |> traced { defaultLine | width = 10, color = darkGrey } |> moveX -220
+        darkBar = segment (0,0) (400, 0) |> traced { defaultLine | width = 10, color = darkGrey } |> moveX -210
         p = (t - global_t0) / (global_t1 - global_t0) * 400 
-        progress = segment (0,0) (p, 0) |> traced { defaultLine | width = 10, color = red } |> moveX -220
+        progress = segment (0,0) (p, 0) |> traced { defaultLine | width = 10, color = red } |> moveX -210
         progressBar = collage 440 20 [darkBar, progress]
         startTime = Html.span [style [("font-size", "x-large"), ("font-weight", "bold"), ("color", "blue")]] [Html.text "00:00:00"] |> (Html.toElement 100 40)
         endTime = Html.span [style [("font-size", "x-large"), ("font-weight", "bold"), ("color", "blue")]] [Html.text "00:00:00"] |> (Html.toElement 100 40)
         editIcon_1 = if (videoStatus /= Stop) then spacer 24 1 else (FontAwesome.pencil Color.darkGreen 24) |> Html.toElement 24 24
         editIcon_2 = if (videoStatus /= Stop) then spacer 24 1 else (FontAwesome.pencil Color.darkGreen 24) |> Html.toElement 24 24
-        ctls = spacer 20 1 `beside` startTime `beside` editIcon_1 `beside` progressBar `beside` endTime  `beside` editIcon_2 `beside` spacer 10 1 `beside` icon_`below` spacer 1 10
+        ctls = spacer 20 1 `beside` startTime `beside` editIcon_1 `beside` spacer 10 1 `beside` progressBar 
+                `beside` endTime  `beside` editIcon_2 `beside` spacer 20 1 `beside` icon_`below` spacer 1 10
     in 
         layers [spacer wth ht |> color white |> opacity 0.85, ctls]
 
