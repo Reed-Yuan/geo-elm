@@ -38,7 +38,7 @@ render  mapp (t, progressBar, anologClock, digitClock) data (traceAlpha, talpha)
         baseMap = TileMap.loadMap mapp
         filteredTraces = List.filter (\(id_, _, _, _, _, _) -> Set.member id_ vehicleList) data
         anologClock_ = anologClock |> move ((toFloat w)/2 - 280, (toFloat h)/2 - 70)
-        digitClock_ = digitClock |> toForm |> move ((toFloat w)/2 - 80, (toFloat h)/2 - 50)
+        digitClock_ = digitClock |> toForm |> move ((toFloat w)/2 - 100, (toFloat h)/2 - 50)
         progressBar_ = progressBar |> toForm |> move (0, 40 - (toFloat h)/2)
         traceWithInfo = List.map (\vtrace -> showTrace vtrace t tl mapp) filteredTraces |> List.unzip
         vehicleTrace = fst traceWithInfo |> group

@@ -19,27 +19,27 @@ traceAlphaSg =
     let
         wrap (slider_, pct) = 
             let
-                pct_ = Exts.Float.roundTo 1 pct
-                title = Html.span [style [("padding-left", "20px"),("font-weight", "bold"),("font-size", "large")]] 
+                pct_ = Exts.Float.roundTo 2 pct
+                title = Html.span [style [("padding-left", "10px"),("font-weight", "bold"),("font-size", "large")]] 
                         [Html.text ("Trace Alpha: " ++ (toString pct_))] |> Html.toElement 160 40
                 wrappedSlider = layers [spacer 20 1 `beside` slider_ `below` title]
             in
                 (wrappedSlider, pct_)
     in
-        Signal.map wrap (Widget.slider 120 0) 
+        Signal.map wrap (Widget.slider 120 0 False) 
 
 mapAlphaSg = 
     let
         wrap (slider_, pct) = 
             let
                 pct_ = Exts.Float.roundTo 2 pct
-                title = Html.span [style [("padding-left", "20px"),("font-weight", "bold"),("font-size", "large")]] 
+                title = Html.span [style [("padding-left", "10px"),("font-weight", "bold"),("font-size", "large")]] 
                         [Html.text ("Map Alpha: " ++ (toString pct_))] |> Html.toElement 160 40
                 wrappedSlider = layers [spacer 20 1 `beside` slider_ `below` title]
             in
                 (wrappedSlider, pct_)
     in
-        Signal.map wrap (Widget.slider 120 0.6) 
+        Signal.map wrap (Widget.slider 120 0.6 False) 
         
 tailSg = 
     let
@@ -47,16 +47,16 @@ tailSg =
             let
                 pct_ = (Exts.Float.roundTo 2 pct) * 120 |> round
                 pct__ = pct_ - (pct_ % 5)
-                title = Html.span [style [("padding-left", "20px"),("font-weight", "bold"),("font-size", "large")]] 
+                title = Html.span [style [("padding-left", "10px"),("font-weight", "bold"),("font-size", "large")]] 
                         [Html.text ("Tail: " ++ (toString pct__) ++ " minutes")] |> Html.toElement 160 40
                 wrappedSlider = layers [spacer 20 1 `beside` slider_ `below` title]
             in
                 (wrappedSlider, pct__)
     in
-        Signal.map wrap (Widget.slider 120 0.5) 
+        Signal.map wrap (Widget.slider 120 0.5 False) 
        
 checkBoxes vlist =
-  (div [style [("padding-left", "20px")]] <|
+  (div [style [("padding-left", "10px")]] <|
         Html.span [style [("font-size", "x-large"), ("font-weight", "bold")]] [Html.text "Vehicles"]
         :: br [] []
         :: br [] []

@@ -65,7 +65,7 @@ showTrace (_, vname, colr, icn, _, gps) t tcLength mapp =
         (Graphics.Collage.group [fst head, hstE], snd head)
 
 showInfo g colorr = 
-  (div [style [("padding-left", "20px"), ("color", colorr), ("background-color", "rgba(255, 255, 255, 0.9)")]] <|
+  (div [style [("padding-left", "20px"), ("color", colorr), ("background-color", "rgba(255, 255, 255, 0.85)")]] <|
         Html.span [style [("font-size", "large"), ("font-weight", "bold"), ("color", toString colorr)]] [Html.text g.vehicleName]
         :: br [] []
         :: br [] []
