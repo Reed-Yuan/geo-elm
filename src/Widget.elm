@@ -8,9 +8,13 @@ import Drag exposing (..)
 import Graphics.Input
 import String
 import Bitwise exposing (..)
+import Signal.Extra
+import FontAwesome
+import Html exposing (..)
+import Html.Events exposing (..)
 
-slider : Int -> Float -> Bool ->Signal (Element, Float)
-slider width initValue isVertical = 
+slider : String -> Int -> Float -> Bool -> Signal String ->Signal (Element, Float)
+slider name width initValue isVertical targetFlow = 
     let
         knotHeight = 20
         knotWidth = 10
@@ -20,23 +24,24 @@ slider width initValue isVertical =
         knotWidthHalf = knotWidth `shiftRight` 1
         lPos = knotWidthHalf
         rPos = width - knotWidthHalf
-        widgetFlow: Signal.Mailbox Bool
-        widgetFlow = Signal.mailbox False
         initPosition = ((initValue * (toFloat (width - knotWidth))) |> round) + knotWidthHalf
         sliderOps : Signal Int
         sliderOps = 
             let
-                merge flag msEvt =
-                    if flag then
-                        case msEvt of
-                            MoveFromTo (x0,y0) (x1, y1) ->
-                                if isVertical
-                                then (y0 - y1)
-                                else (x1 - x0)
-                            _ -> 0
-                    else 0
+                merge target msEvt =
+                    let
+                        d = Debug.log "target" target
+                    in
+                        if target == name then
+                            case msEvt of
+                                MoveFromTo (x0,y0) (x1, y1) ->
+                                    if isVertical
+                                    then (y0 - y1)
+                                    else (x1 - x0)
+                                _ -> 0
+                        else 0
             in
-                Signal.map2 merge widgetFlow.signal Drag.mouseEvents
+                Signal.map2 merge targetFlow Drag.mouseEvents
         
         step a acc = (a + acc) |> Basics.min rPos |> Basics.max lPos
         posSignal = Signal.foldp step initPosition sliderOps
@@ -49,11 +54,11 @@ slider width initValue isVertical =
                     Graphics.Element.spacer width barHeight |> Graphics.Element.color Color.darkGrey 
                         |> container width knotHeight (midLeftAt (absolute 0) (absolute knotHeightHalf))
         slideRect = 
-            (if isVertical
-                then
-                    spacer knotHeight width 
-                else
-                    spacer width knotHeight) |> Graphics.Input.hoverable (Signal.message widgetFlow.address)
+            if isVertical
+            then
+                spacer knotHeight width
+            else
+                spacer width knotHeight
         render x = 
             let
                 knot = (if isVertical 
@@ -67,4 +72,4 @@ slider width initValue isVertical =
             in
                 (knotAndBar, pct)
     in
-        Signal.map render posSignal  
+        Signal.map render posSignal

@@ -14,24 +14,22 @@ type MapOps = Zoom Int | Pan (Int, Int) | Size (Int, Int) | NoOp
 
 mapOps : Signal.Mailbox MapOps
 mapOps = Signal.mailbox NoOp
-shadowFlow: Signal.Mailbox Bool
-shadowFlow = Signal.mailbox False
 
-ops : Signal MouseWheel -> Signal (Int, Int) -> Signal MapOps
-ops mouseWheelIn screenSizeIn = 
+ops : Signal MouseWheel -> Signal (Int, Int) -> Signal String -> Signal MapOps
+ops mouseWheelIn screenSizeIn targetFlow = 
     let
         level x = if x < 0 then -1
                     else if x == 0 then 0
                     else 1
         zooms = (\ms -> ms.delta |> level |> Zoom) <~ mouseWheelIn
         sizing = (\(x, y) -> Size (x, y)) <~ screenSizeIn
-        mouseDrag evt flag = 
-            if flag then NoOp
+        mouseDrag evt target = 
+            if target /= "nothing" then NoOp
             else
                 case evt of
                     MoveFromTo (x0,y0) (x1, y1) -> Pan (x1 - x0, y1 - y0)
                     _ -> NoOp
-        pan = Signal.map2 mouseDrag Drag.mouseEvents shadowFlow.signal
+        pan = Signal.map2 mouseDrag Drag.mouseEvents targetFlow
     in
         Signal.mergeMany [zooms, sizing, pan]
         
@@ -43,9 +41,9 @@ trans op mapp =
         Size (x, y) -> {mapp | size = (x, y)}
         _ -> mapp
 
-mapSg : Signal MouseWheel -> Signal (Int, Int) -> Signal TileMap.Map        
-mapSg mouseWheelIn screenSizeIn = 
+mapSg : Signal MouseWheel -> Signal (Int, Int) -> Signal String -> Signal TileMap.Map        
+mapSg mouseWheelIn screenSizeIn targetFlow = 
     let
         initMap = { size = (TileMap.tileSize, TileMap.tileSize), center = (43.83488, -79.5257), zoom = 13 }
     in
-        Signal.foldp trans initMap (ops mouseWheelIn screenSizeIn)
+        Signal.foldp trans initMap (ops mouseWheelIn screenSizeIn targetFlow)

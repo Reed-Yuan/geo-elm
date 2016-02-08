@@ -19,6 +19,11 @@ import Date.Create
 import Date.Config.Config_en_us exposing (..)
 import Animation exposing (..)
 import FontAwesome
+import Exts.Float
+import Mouse
+
+import Widget
+import MapControl exposing (..)
 
 global_animation = animation 0 |> from global_t0 |> to global_t1 |> duration (240*Time.second)
 
@@ -62,7 +67,7 @@ trans op state =
 
 videoStateSg = Signal.foldp trans (State 0 Playing) ops
 
-videoControl t videoStatus =
+videoControl t videoStatus (startTime, iconnA, sliderA, t0) (timeDelta, iconnB, sliderB, tDelta) =
     let
         ht = 40
         wth = 820
@@ -73,19 +78,19 @@ videoControl t videoStatus =
                     |> Graphics.Input.clickable (Signal.message videoOps.address PlayVideo)
         icon_pause = FontAwesome.pause Color.darkGreen 20 |> Html.toElement 40 20
                     |> Graphics.Input.clickable (Signal.message videoOps.address PauseVideo)
-        icon_ = (if isPlaying then flow right [icon_pause, icon_stop] else flow right [icon_play, spacer 40 20])
+        icon_ = (if isPlaying then icon_pause else icon_play) `beside` (if videoStatus == Stop then spacer 40 20 else icon_stop)
         darkBar = segment (0,0) (400, 0) |> traced { defaultLine | width = 10, color = darkGrey } |> moveX -210
         p = (t - global_t0) / (global_t1 - global_t0) * 400 
         progress = segment (0,0) (p, 0) |> traced { defaultLine | width = 10, color = red } |> moveX -210
-        progressBar = collage 440 20 [darkBar, progress]
-        startTime = Html.span [style [("font-size", "x-large"), ("font-weight", "bold"), ("color", "blue")]] [Html.text "00:00:00"] |> (Html.toElement 100 40)
-        endTime = Html.span [style [("font-size", "x-large"), ("font-weight", "bold"), ("color", "blue")]] [Html.text "00:00:00"] |> (Html.toElement 100 40)
-        editIcon_1 = if (videoStatus /= Stop) then spacer 24 1 else (FontAwesome.pencil Color.darkGreen 24) |> Html.toElement 24 24
-        editIcon_2 = if (videoStatus /= Stop) then spacer 24 1 else (FontAwesome.pencil Color.darkGreen 24) |> Html.toElement 24 24
-        ctls = spacer 20 1 `beside` startTime `beside` editIcon_1 `beside` spacer 10 1 `beside` progressBar 
-                `beside` endTime  `beside` editIcon_2 `beside` spacer 20 1 `beside` icon_`below` spacer 1 10
+        progressBar = layers [spacer 440 30 |> color white |> opacity 0.85, spacer 1 10 `above` collage 440 10 [darkBar, progress]]
+        editIcon_1 = if (videoStatus /= Stop) then spacer 24 1 else iconnA
+        editIcon_2 = if (videoStatus /= Stop) then spacer 24 1 else iconnB
+        ctls = layers [spacer wth ht |> color white |> opacity 0.85,
+                spacer 20 1 `beside` startTime `beside` editIcon_1 `beside` spacer 10 1 `beside` progressBar 
+                `beside` timeDelta  `beside` editIcon_2 `beside` spacer 20 1 `beside` icon_`below` spacer 1 10]
+        sliders = spacer 110 1 `beside` sliderA `beside` spacer 530 1 `beside` sliderB
     in 
-        layers [spacer wth ht |> color white |> opacity 0.85, ctls]
+        container wth 170 (bottomLeftAt (absolute 0) (absolute 0)) (sliders `above` spacer 1 10 `above` ctls)
 
 clockk t = 
     let
@@ -99,15 +104,79 @@ clockk t =
     in
        (clk, dTxt)
 
-videoSg = 
+videoSg targetFlow = 
     let
-        aug state =
+        aug state (startTime, iconnA, sliderA, t0) (timeSpan, iconnB, sliderB, tDelta) =
             let
                 t = animate state.clock global_animation
-                progressBar = videoControl t state.videoStatus
+                progressBar = videoControl t state.videoStatus (startTime, iconnA, sliderA, t0) (timeSpan, iconnB, sliderB, tDelta)
                 (anologClock, digitClock) = clockk t
             in
                 (t, progressBar, anologClock, digitClock)
     in
-        Signal.map aug videoStateSg 
+        Signal.map3 aug videoStateSg (startTimeCtlSg targetFlow) (timeSpanCtlSg targetFlow)
+
+startTimeHover: Signal.Mailbox Bool
+startTimeHover = Signal.mailbox False
+
+timeDeltaHover: Signal.Mailbox Bool
+timeDeltaHover = Signal.mailbox False
+
+targetFlow = 
+    let 
+        merge startTime timeDelta = 
+            if startTime then "startTime"
+            else if timeDelta then "timeDelta"
+            else "nothing"
+    in
+        Signal.map2 merge startTimeHover.signal timeDeltaHover.signal
+
+startTimeCtlSg targetFlow = 
+    let
+        f (iconn, sliderr, pct) =
+            let
+                t =  ((pct * 23 |> round) * 3600000) |> toFloat |> (+) global_t0
+                timeNode = Html.span 
+                            [style [("font-size", "large"), ("font-weight", "bold"), ("color", "blue")]] 
+                            [Html.text (timeToString t)] |> (Html.toElement 100 30)
+                slider = sliderr |> Graphics.Input.hoverable (Signal.message startTimeHover.address)
+            in
+                ( timeNode, iconn, slider, t)
+    in
+        Signal.map f (clickSlider "startTime" 100 0 True targetFlow)
+
+timeSpanCtlSg targetFlow = 
+    let
+        f (iconn, sliderr, pct) =
+            let
+                t =  pct * 23 |> round |> (+) 1
+                timeNode = Html.span 
+                            [style [("font-size", "large"), ("font-weight", "bold"), ("color", "blue")]] 
+                            [Html.text ("+ " ++ (toString t) ++ " hours")] |> (Html.toElement 100 30)
+                slider = sliderr |> Graphics.Input.hoverable (Signal.message timeDeltaHover.address)
+            in
+                ( timeNode, iconn, slider, t)
+    in
+        Signal.map f (clickSlider "timeDelta" 100 0 True targetFlow)
+
+clickFlow : Signal.Mailbox String
+clickFlow = Signal.mailbox ""
+
+clickSlider : String -> Int -> Float -> Bool -> Signal String -> Signal (Element, Element, Float)
+clickSlider name width initValue isVertical targetFlow = 
+    let
+        editStateSg_ : Signal Bool
+        editStateSg_ = Signal.foldp (\f state -> if f then not state else state ) False ((\s -> s == name) <~ clickFlow.signal)
+        editStateSg = Signal.map2 (\s x -> if x == PlayVideo then False else s) editStateSg_ videoOps.signal
+        editIcon = (FontAwesome.pencil Color.darkGreen 24) |> Html.toElement 24 24 |> Graphics.Input.clickable (Signal.message clickFlow.address name)
+        dock isEditing (slider, pct) = 
+            let
+                sliderBar = (layers [spacer 40 120 |> color white |> opacity 0.85, spacer 10 1 `beside` slider `below` spacer 1 10])
+                            --|> Graphics.Input.hoverable (Signal.message shadowFlow.address)
+            in
+                if isEditing
+                then (editIcon, sliderBar, pct)
+                else (editIcon, spacer 40 0, pct)
+    in
+        Signal.map2 dock editStateSg (Widget.slider name width initValue isVertical targetFlow)
         
