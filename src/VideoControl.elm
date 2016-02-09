@@ -67,7 +67,7 @@ trans op state =
 
 videoStateSg = Signal.foldp trans (State 0 Playing) ops
 
-videoControl t videoStatus (startTime, iconnA, sliderA, t0) (timeDelta, iconnB, sliderB, tDelta) =
+videoControl t videoStatus (startTime, iconnA, sliderA, t0) (timeDelta, iconnB, sliderB, tDelta) shadowFlow =
     let
         ht = 40
         wth = 820
@@ -89,7 +89,9 @@ videoControl t videoStatus (startTime, iconnA, sliderA, t0) (timeDelta, iconnB, 
                 spacer 20 1 `beside` startTime `beside` editIcon_1 `beside` spacer 10 1 `beside` progressBar 
                 `beside` timeDelta  `beside` editIcon_2 `beside` spacer 20 1 `beside` icon_ `below` spacer 1 10]
                 |> container wth 40 (bottomLeftAt (absolute 0) (absolute 0))
-        sliders = spacer 110 1 `beside` sliderA `beside` spacer 530 1 `beside` sliderB
+        sliderA_ = if (videoStatus /= Stop) then empty else sliderA |> Graphics.Input.hoverable (Signal.message shadowFlow.address)        
+        sliderB_ = if (videoStatus /= Stop) then empty else sliderB |> Graphics.Input.hoverable (Signal.message shadowFlow.address)        
+        sliders = spacer 110 1 `beside` sliderA_ `beside` spacer 530 1 `beside` sliderB_
                 |> container wth 160 (bottomLeftAt (absolute 0) (absolute 0))
     in 
         sliders `above` spacer wth 10 `above` ctls
@@ -106,12 +108,12 @@ clockk t =
     in
        (clk, dTxt)
 
-videoSg = 
+videoSg shadowFlow = 
     let
         aug state (startTime, iconnA, sliderA, t0) (timeSpan, iconnB, sliderB, tDelta) =
             let
                 t = animate state.clock global_animation
-                progressBar = videoControl t state.videoStatus (startTime, iconnA, sliderA, t0) (timeSpan, iconnB, sliderB, tDelta)
+                progressBar = videoControl t state.videoStatus (startTime, iconnA, sliderA, t0) (timeSpan, iconnB, sliderB, tDelta) shadowFlow
                 (anologClock, digitClock) = clockk t
             in
                 (t, progressBar, anologClock, digitClock)

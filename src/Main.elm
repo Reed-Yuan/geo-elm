@@ -34,11 +34,17 @@ shadowFlow = Signal.mailbox False
 dataSg : Signal (List VehiclTrace)
 dataSg = Signal.map2 (\gps mapp -> List.map3 (\x y z -> Data.parseGps x y z mapp) gps global_colors global_icons) vehicleIn (mapSg mouseWheelIn screenSizeIn shadowFlow.signal)
 
-render : TileMap.Map -> (Time, Element, Form, Element) -> List Data.VehiclTrace -> (Element, Float) -> (Element, Float) -> (Element, Int) -> Set Int -> Element
-render  mapp (t, progressBar, anologClock, digitClock) data (traceAlpha, talpha) (mapAlpha, malpha) (tailLength, tl) vehicleList = 
+render : TileMap.Map -> (Time, Element, Form, Element) -> List Data.VehiclTrace -> VehicleOptions -> Element
+render  mapp (t, progressBar, anologClock, digitClock) data vehicleOptions = 
     let
         w = mapp.size |> fst
         h = mapp.size |> snd
+        
+        (traceAlpha, talpha) = vehicleOptions.traceAlpha
+        (mapAlpha, malpha) = vehicleOptions.mapAlpha
+        (tailLength, tl) = vehicleOptions.tailLength
+        vehicleList = vehicleOptions.selectedVehicles
+        
         baseMap = TileMap.loadMap mapp
         filteredTraces = List.filter (\(id_, _, _, _, _, _) -> Set.member id_ vehicleList) data
         anologClock_ = anologClock |> move ((toFloat w)/2 - 280, (toFloat h)/2 - 70)
@@ -65,5 +71,5 @@ render  mapp (t, progressBar, anologClock, digitClock) data (traceAlpha, talpha)
         collage w h [toForm baseMap |> alpha malpha, fullTrace, vehicleTrace, info, title, anologClock_, digitClock_, progressBar_, vehicleStateView_, gitLink]
 
 main : Signal Element
-main = Signal.map3 (\x y z -> x y z) (Signal.map5 render (mapSg mouseWheelIn screenSizeIn shadowFlow.signal) VideoControl.videoSg 
-        dataSg traceAlphaSg mapAlphaSg) tailSg vehicleListSg
+main = Signal.map4 render (mapSg mouseWheelIn screenSizeIn shadowFlow.signal) (VideoControl.videoSg shadowFlow) dataSg vehicleOptionsSg
+        

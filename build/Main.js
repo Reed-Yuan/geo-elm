@@ -18443,9 +18443,21 @@ Elm.VideoControl.make = function (_elm) {
    var Playing = {ctor: "Playing"};
    var global_t1 = $Utils.timeFromString("2016-01-12T00:00:00");
    var global_t0 = $Utils.timeFromString("2016-01-11T00:00:00");
-   var videoControl = F4(function (t,videoStatus,_p6,_p5) {
+   var videoControl = F5(function (t,
+   videoStatus,
+   _p6,
+   _p5,
+   shadowFlow) {
       var _p7 = _p6;
       var _p8 = _p5;
+      var sliderB_ = !_U.eq(videoStatus,
+      Stop) ? $Graphics$Element.empty : A2($Graphics$Input.hoverable,
+      $Signal.message(shadowFlow.address),
+      _p8._2);
+      var sliderA_ = !_U.eq(videoStatus,
+      Stop) ? $Graphics$Element.empty : A2($Graphics$Input.hoverable,
+      $Signal.message(shadowFlow.address),
+      _p7._2);
       var editIcon_2 = !_U.eq(videoStatus,
       Stop) ? A2($Graphics$Element.spacer,24,1) : _p8._1;
       var editIcon_1 = !_U.eq(videoStatus,
@@ -18513,9 +18525,9 @@ Elm.VideoControl.make = function (_elm) {
       A2($Graphics$Element.beside,
       A2($Graphics$Element.beside,
       A2($Graphics$Element.spacer,110,1),
-      _p7._2),
+      sliderA_),
       A2($Graphics$Element.spacer,530,1)),
-      _p8._2));
+      sliderB_));
       var ht = 40;
       var ctls = A4($Graphics$Element.container,
       wth,
@@ -18602,12 +18614,12 @@ Elm.VideoControl.make = function (_elm) {
    trans,
    A2(State,0,Playing),
    ops);
-   var videoSg = function () {
+   var videoSg = function (shadowFlow) {
       var aug = F3(function (state,_p13,_p12) {
          var _p14 = _p13;
          var _p15 = _p12;
          var t = A2($Animation.animate,state.clock,global_animation);
-         var progressBar = A4(videoControl,
+         var progressBar = A5(videoControl,
          t,
          state.videoStatus,
          {ctor: "_Tuple4"
@@ -18619,7 +18631,8 @@ Elm.VideoControl.make = function (_elm) {
          ,_0: _p15._0
          ,_1: _p15._1
          ,_2: _p15._2
-         ,_3: _p15._3});
+         ,_3: _p15._3},
+         shadowFlow);
          var _p16 = clockk(t);
          var anologClock = _p16._0;
          var digitClock = _p16._1;
@@ -18634,7 +18647,7 @@ Elm.VideoControl.make = function (_elm) {
       videoStateSg,
       startTimeCtlSg,
       timeSpanCtlSg);
-   }();
+   };
    return _elm.VideoControl.values = {_op: _op
                                      ,global_animation: global_animation
                                      ,global_t0: global_t0
@@ -18865,7 +18878,20 @@ Elm.VehicleControl.make = function (_elm) {
       wrap,
       A4($Widget.slider,"traceAlpha",100,0,false));
    }();
+   var VehicleOptions = F4(function (a,b,c,d) {
+      return {traceAlpha: a
+             ,tailLength: b
+             ,mapAlpha: c
+             ,selectedVehicles: d};
+   });
+   var vehicleOptionsSg = A5($Signal.map4,
+   F4(function (a,b,c,d) {    return A4(VehicleOptions,a,b,c,d);}),
+   traceAlphaSg,
+   tailSg,
+   mapAlphaSg,
+   vehicleListSg);
    return _elm.VehicleControl.values = {_op: _op
+                                       ,VehicleOptions: VehicleOptions
                                        ,traceAlphaSg: traceAlphaSg
                                        ,mapAlphaSg: mapAlphaSg
                                        ,tailSg: tailSg
@@ -18874,7 +18900,8 @@ Elm.VehicleControl.make = function (_elm) {
                                        ,checkMailboxes: checkMailboxes
                                        ,getCheckMailbox: getCheckMailbox
                                        ,checkBoxes: checkBoxes
-                                       ,vehicleListSg: vehicleListSg};
+                                       ,vehicleListSg: vehicleListSg
+                                       ,vehicleOptionsSg: vehicleOptionsSg};
 };
 Elm.Main = Elm.Main || {};
 Elm.Main.make = function (_elm) {
@@ -18905,23 +18932,45 @@ Elm.Main.make = function (_elm) {
    $VideoControl = Elm.VideoControl.make(_elm);
    var _op = {};
    var shadowFlow = $Signal.mailbox(false);
-   var render = F7(function (mapp,
-   _p3,
-   data,
-   _p2,
-   _p1,
-   _p0,
-   vehicleList) {
-      var _p4 = _p3;
-      var _p5 = _p2;
-      var _p6 = _p1;
-      var _p7 = _p0;
-      var checkBoxes_ = $VehicleControl.checkBoxes(vehicleList);
+   var render = F4(function (mapp,_p0,data,vehicleOptions) {
+      var _p1 = _p0;
       var bck = A2($Graphics$Element.opacity,
       0.85,
       A2($Graphics$Element.color,
       $Color.white,
       A2($Graphics$Element.spacer,160,500)));
+      var baseMap = $TileMap.loadMap(mapp);
+      var vehicleList = vehicleOptions.selectedVehicles;
+      var filteredTraces = A2($List.filter,
+      function (_p2) {
+         var _p3 = _p2;
+         return A2($Set.member,_p3._0,vehicleList);
+      },
+      data);
+      var checkBoxes_ = $VehicleControl.checkBoxes(vehicleList);
+      var _p4 = vehicleOptions.tailLength;
+      var tailLength = _p4._0;
+      var tl = _p4._1;
+      var traceWithInfo = $List.unzip(A2($List.map,
+      function (vtrace) {
+         return A4($Data.showTrace,vtrace,_p1._0,tl,mapp);
+      },
+      filteredTraces));
+      var vehicleTrace = $Graphics$Collage.group($Basics.fst(traceWithInfo));
+      var _p5 = vehicleOptions.mapAlpha;
+      var mapAlpha = _p5._0;
+      var malpha = _p5._1;
+      var _p6 = vehicleOptions.traceAlpha;
+      var traceAlpha = _p6._0;
+      var talpha = _p6._1;
+      var fullTrace = A2($Graphics$Collage.alpha,
+      talpha,
+      $Graphics$Collage.group(A2($List.map,
+      function (_p7) {
+         var _p8 = _p7;
+         return _p8._4;
+      },
+      filteredTraces)));
       var vehicleStateView = $Graphics$Element.layers(_U.list([bck
                                                               ,A2($Graphics$Element.below,
                                                               A2($Graphics$Element.below,
@@ -18929,49 +18978,28 @@ Elm.Main.make = function (_elm) {
                                                               A2($Graphics$Element.below,
                                                               A2($Graphics$Element.below,
                                                               A2($Graphics$Element.below,
-                                                              _p6._0,
+                                                              mapAlpha,
                                                               A2($Graphics$Element.spacer,1,30)),
-                                                              _p7._0),
+                                                              tailLength),
                                                               A2($Graphics$Element.spacer,1,30)),
-                                                              _p5._0),
+                                                              traceAlpha),
                                                               A2($Graphics$Element.spacer,1,30)),
                                                               checkBoxes_)]));
-      var filteredTraces = A2($List.filter,
-      function (_p8) {
-         var _p9 = _p8;
-         return A2($Set.member,_p9._0,vehicleList);
-      },
-      data);
-      var traceWithInfo = $List.unzip(A2($List.map,
-      function (vtrace) {
-         return A4($Data.showTrace,vtrace,_p4._0,_p7._1,mapp);
-      },
-      filteredTraces));
-      var vehicleTrace = $Graphics$Collage.group($Basics.fst(traceWithInfo));
-      var fullTrace = A2($Graphics$Collage.alpha,
-      _p5._1,
-      $Graphics$Collage.group(A2($List.map,
-      function (_p10) {
-         var _p11 = _p10;
-         return _p11._4;
-      },
-      filteredTraces)));
-      var baseMap = $TileMap.loadMap(mapp);
       var h = $Basics.snd(mapp.size);
       var progressBar_ = A2($Graphics$Collage.move,
       {ctor: "_Tuple2",_0: 0,_1: 120 - $Basics.toFloat(h) / 2},
-      $Graphics$Collage.toForm(_p4._1));
+      $Graphics$Collage.toForm(_p1._1));
       var w = $Basics.fst(mapp.size);
       var anologClock_ = A2($Graphics$Collage.move,
       {ctor: "_Tuple2"
       ,_0: $Basics.toFloat(w) / 2 - 280
       ,_1: $Basics.toFloat(h) / 2 - 70},
-      _p4._2);
+      _p1._2);
       var digitClock_ = A2($Graphics$Collage.move,
       {ctor: "_Tuple2"
       ,_0: $Basics.toFloat(w) / 2 - 100
       ,_1: $Basics.toFloat(h) / 2 - 50},
-      $Graphics$Collage.toForm(_p4._3));
+      $Graphics$Collage.toForm(_p1._3));
       var info = A2($Graphics$Collage.move,
       {ctor: "_Tuple2",_0: $Basics.toFloat(w) / 2 - 100,_1: 0},
       $Graphics$Collage.toForm(A4($Graphics$Element.container,
@@ -19030,7 +19058,7 @@ Elm.Main.make = function (_elm) {
       w,
       h,
       _U.list([A2($Graphics$Collage.alpha,
-              _p6._1,
+              malpha,
               $Graphics$Collage.toForm(baseMap))
               ,fullTrace
               ,vehicleTrace
@@ -19111,20 +19139,15 @@ Elm.Main.make = function (_elm) {
    mouseWheelIn,
    screenSizeIn,
    shadowFlow.signal));
-   var main = A4($Signal.map3,
-   F3(function (x,y,z) {    return A2(x,y,z);}),
-   A6($Signal.map5,
+   var main = A5($Signal.map4,
    render,
    A3($MapControl.mapSg,
    mouseWheelIn,
    screenSizeIn,
    shadowFlow.signal),
-   $VideoControl.videoSg,
+   $VideoControl.videoSg(shadowFlow),
    dataSg,
-   $VehicleControl.traceAlphaSg,
-   $VehicleControl.mapAlphaSg),
-   $VehicleControl.tailSg,
-   $VehicleControl.vehicleListSg);
+   $VehicleControl.vehicleOptionsSg);
    return _elm.Main.values = {_op: _op
                              ,global_colors: global_colors
                              ,global_icons: global_icons

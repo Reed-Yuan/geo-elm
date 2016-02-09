@@ -14,6 +14,14 @@ import Set
 import List.Extra
 import Text
 import String
+
+type alias VehicleOptions =
+    {
+        traceAlpha: (Element, Float),
+        tailLength: (Element, Int),
+        mapAlpha: (Element, Float),
+        selectedVehicles: Set Int
+    }
         
 traceAlphaSg = 
     let
@@ -92,6 +100,6 @@ vehicleListSg =
     in
         List.foldr foldStep (Signal.constant Set.empty) checkMailboxes
         
-
+vehicleOptionsSg = Signal.map4 (\a b c d -> VehicleOptions a b c d) traceAlphaSg tailSg mapAlphaSg vehicleListSg
     
     
