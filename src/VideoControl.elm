@@ -87,10 +87,12 @@ videoControl t videoStatus (startTime, iconnA, sliderA, t0) (timeDelta, iconnB, 
         editIcon_2 = if (videoStatus /= Stop) then spacer 24 1 else iconnB
         ctls = layers [spacer wth ht |> color white |> opacity 0.85,
                 spacer 20 1 `beside` startTime `beside` editIcon_1 `beside` spacer 10 1 `beside` progressBar 
-                `beside` timeDelta  `beside` editIcon_2 `beside` spacer 20 1 `beside` icon_`below` spacer 1 10]
+                `beside` timeDelta  `beside` editIcon_2 `beside` spacer 20 1 `beside` icon_ `below` spacer 1 10]
+                |> container wth 40 (bottomLeftAt (absolute 0) (absolute 0))
         sliders = spacer 110 1 `beside` sliderA `beside` spacer 530 1 `beside` sliderB
+                |> container wth 160 (bottomLeftAt (absolute 0) (absolute 0))
     in 
-        container wth 170 (bottomLeftAt (absolute 0) (absolute 0)) (sliders `above` spacer 1 10 `above` ctls)
+        sliders `above` spacer wth 10 `above` ctls
 
 clockk t = 
     let
@@ -104,7 +106,7 @@ clockk t =
     in
        (clk, dTxt)
 
-videoSg targetFlow = 
+videoSg = 
     let
         aug state (startTime, iconnA, sliderA, t0) (timeSpan, iconnB, sliderB, tDelta) =
             let
@@ -114,7 +116,7 @@ videoSg targetFlow =
             in
                 (t, progressBar, anologClock, digitClock)
     in
-        Signal.map3 aug videoStateSg (startTimeCtlSg targetFlow) (timeSpanCtlSg targetFlow)
+        Signal.map3 aug videoStateSg startTimeCtlSg timeSpanCtlSg 
 
 startTimeHover: Signal.Mailbox Bool
 startTimeHover = Signal.mailbox False
@@ -131,7 +133,7 @@ targetFlow =
     in
         Signal.map2 merge startTimeHover.signal timeDeltaHover.signal
 
-startTimeCtlSg targetFlow = 
+startTimeCtlSg = 
     let
         f (iconn, sliderr, pct) =
             let
@@ -139,13 +141,12 @@ startTimeCtlSg targetFlow =
                 timeNode = Html.span 
                             [style [("font-size", "large"), ("font-weight", "bold"), ("color", "blue")]] 
                             [Html.text (timeToString t)] |> (Html.toElement 100 30)
-                slider = sliderr |> Graphics.Input.hoverable (Signal.message startTimeHover.address)
             in
-                ( timeNode, iconn, slider, t)
+                ( timeNode, iconn, sliderr, t)
     in
-        Signal.map f (clickSlider "startTime" 100 0 True targetFlow)
+        Signal.map f (clickSlider "startTime" 100 0 True)
 
-timeSpanCtlSg targetFlow = 
+timeSpanCtlSg = 
     let
         f (iconn, sliderr, pct) =
             let
@@ -153,17 +154,16 @@ timeSpanCtlSg targetFlow =
                 timeNode = Html.span 
                             [style [("font-size", "large"), ("font-weight", "bold"), ("color", "blue")]] 
                             [Html.text ("+ " ++ (toString t) ++ " hours")] |> (Html.toElement 100 30)
-                slider = sliderr |> Graphics.Input.hoverable (Signal.message timeDeltaHover.address)
             in
-                ( timeNode, iconn, slider, t)
+                ( timeNode, iconn, sliderr, t)
     in
-        Signal.map f (clickSlider "timeDelta" 100 0 True targetFlow)
+        Signal.map f (clickSlider "timeDelta" 100 0 True)
 
 clickFlow : Signal.Mailbox String
 clickFlow = Signal.mailbox ""
 
-clickSlider : String -> Int -> Float -> Bool -> Signal String -> Signal (Element, Element, Float)
-clickSlider name width initValue isVertical targetFlow = 
+clickSlider : String -> Int -> Float -> Bool -> Signal (Element, Element, Float)
+clickSlider name width initValue isVertical = 
     let
         editStateSg_ : Signal Bool
         editStateSg_ = Signal.foldp (\f state -> if f then not state else state ) False ((\s -> s == name) <~ clickFlow.signal)
@@ -172,11 +172,9 @@ clickSlider name width initValue isVertical targetFlow =
         dock isEditing (slider, pct) = 
             let
                 sliderBar = (layers [spacer 40 120 |> color white |> opacity 0.85, spacer 10 1 `beside` slider `below` spacer 1 10])
-                            --|> Graphics.Input.hoverable (Signal.message shadowFlow.address)
             in
                 if isEditing
                 then (editIcon, sliderBar, pct)
                 else (editIcon, spacer 40 0, pct)
     in
-        Signal.map2 dock editStateSg (Widget.slider name width initValue isVertical targetFlow)
-        
+        Signal.map2 dock editStateSg (Widget.slider name width initValue isVertical)

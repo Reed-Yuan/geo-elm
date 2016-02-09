@@ -17275,15 +17275,29 @@ Elm.Utils.make = function (_elm) {
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm),
+   $Signal$Extra = Elm.Signal.Extra.make(_elm),
    $String = Elm.String.make(_elm),
    $Vendor = Elm.Vendor.make(_elm);
    var _op = {};
+   var zip5 = F5(function (sga,sgb,sgc,sgd,sge) {
+      var step = F2(function (_p0,e) {
+         var _p1 = _p0;
+         return {ctor: "_Tuple5"
+                ,_0: _p1._0
+                ,_1: _p1._1
+                ,_2: _p1._2
+                ,_3: _p1._3
+                ,_4: e};
+      });
+      var tmp = A4($Signal$Extra.zip4,sga,sgb,sgc,sgd);
+      return A3($Signal.map2,step,tmp,sge);
+   });
    var toCssString = function (cl) {
-      var _p0 = $Color.toRgb(cl);
-      var red = _p0.red;
-      var green = _p0.green;
-      var blue = _p0.blue;
-      var alpha = _p0.alpha;
+      var _p2 = $Color.toRgb(cl);
+      var red = _p2.red;
+      var green = _p2.green;
+      var blue = _p2.blue;
+      var alpha = _p2.alpha;
       var rgba = A2($String.join,
       ",",
       A2($List.map,
@@ -17320,7 +17334,8 @@ Elm.Utils.make = function (_elm) {
                               ,global_tzone: global_tzone
                               ,timeFromString: timeFromString
                               ,timeToString: timeToString
-                              ,toCssString: toCssString};
+                              ,toCssString: toCssString
+                              ,zip5: zip5};
 };
 Elm.Proj = Elm.Proj || {};
 Elm.Proj.make = function (_elm) {
@@ -18078,9 +18093,9 @@ Elm.MapControl.make = function (_elm) {
    var Size = function (a) {    return {ctor: "Size",_0: a};};
    var Pan = function (a) {    return {ctor: "Pan",_0: a};};
    var Zoom = function (a) {    return {ctor: "Zoom",_0: a};};
-   var ops = F3(function (mouseWheelIn,screenSizeIn,targetFlow) {
-      var mouseDrag = F2(function (evt,target) {
-         if (!_U.eq(target,"nothing")) return NoOp; else {
+   var ops = F3(function (mouseWheelIn,screenSizeIn,shadowFlow) {
+      var mouseDrag = F2(function (evt,inShadow) {
+         if (inShadow) return NoOp; else {
                var _p1 = evt;
                if (_p1.ctor === "MoveFromTo" && _p1._0.ctor === "_Tuple2" && _p1._1.ctor === "_Tuple2")
                {
@@ -18095,7 +18110,7 @@ Elm.MapControl.make = function (_elm) {
       var pan = A3($Signal.map2,
       mouseDrag,
       $Drag.mouseEvents,
-      targetFlow);
+      shadowFlow);
       var sizing = A2($Signal$Extra._op["<~"],
       function (_p2) {
          var _p3 = _p2;
@@ -18112,7 +18127,7 @@ Elm.MapControl.make = function (_elm) {
       mouseWheelIn);
       return $Signal.mergeMany(_U.list([zooms,sizing,pan]));
    });
-   var mapSg = F3(function (mouseWheelIn,screenSizeIn,targetFlow) {
+   var mapSg = F3(function (mouseWheelIn,screenSizeIn,shadowFlow) {
       var initMap = {size: {ctor: "_Tuple2"
                            ,_0: $TileMap.tileSize
                            ,_1: $TileMap.tileSize}
@@ -18121,7 +18136,7 @@ Elm.MapControl.make = function (_elm) {
       return A3($Signal.foldp,
       trans,
       initMap,
-      A3(ops,mouseWheelIn,screenSizeIn,targetFlow));
+      A3(ops,mouseWheelIn,screenSizeIn,shadowFlow));
    });
    var MouseWheel = F2(function (a,b) {
       return {pos: a,delta: b};
@@ -18149,30 +18164,46 @@ Elm.Widget.make = function (_elm) {
    $Debug = Elm.Debug.make(_elm),
    $Drag = Elm.Drag.make(_elm),
    $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $Graphics$Input = Elm.Graphics.Input.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
-   $Signal = Elm.Signal.make(_elm);
+   $Signal = Elm.Signal.make(_elm),
+   $Signal$Extra = Elm.Signal.Extra.make(_elm);
    var _op = {};
-   var slider = F5(function (name,
-   width,
-   initValue,
-   isVertical,
-   targetFlow) {
+   var slider = F4(function (name,width,initValue,isVertical) {
+      var hoverFlow = $Signal.mailbox(false);
+      var check = function (_p0) {
+         var _p1 = _p0;
+         if ($Basics.not(_p1._0)) return false; else {
+               var _p2 = _p1._1;
+               if (_p2.ctor === "MoveFromTo") {
+                     return true;
+                  } else {
+                     return false;
+                  }
+            }
+      };
+      var filteredMouseEvt = A2($Signal.map,
+      $Basics.snd,
+      A3($Signal.filter,
+      check,
+      {ctor: "_Tuple2"
+      ,_0: false
+      ,_1: $Drag.StartAt({ctor: "_Tuple2",_0: 0,_1: 0})},
+      A2($Signal$Extra.zip,hoverFlow.signal,$Drag.mouseEvents)));
       var sliderOps = function () {
-         var merge = F2(function (target,msEvt) {
-            var d = A2($Debug.log,"target",target);
-            if (_U.eq(target,name)) {
-                  var _p0 = msEvt;
-                  if (_p0.ctor === "MoveFromTo" && _p0._0.ctor === "_Tuple2" && _p0._1.ctor === "_Tuple2")
-                  {
-                        return isVertical ? _p0._0._1 - _p0._1._1 : _p0._1._0 - _p0._0._0;
-                     } else {
-                        return 0;
-                     }
-               } else return 0;
-         });
-         return A3($Signal.map2,merge,targetFlow,$Drag.mouseEvents);
+         var merge = function (msEvt) {
+            var d = 3;
+            var _p3 = msEvt;
+            if (_p3.ctor === "MoveFromTo" && _p3._0.ctor === "_Tuple2" && _p3._1.ctor === "_Tuple2")
+            {
+                  return isVertical ? _p3._0._1 - _p3._1._1 : _p3._1._0 - _p3._0._0;
+               } else {
+                  return 0;
+               }
+         };
+         return A2($Signal.map,merge,filteredMouseEvt);
       }();
       var widthHalf = A2($Bitwise.shiftRight,width,1);
       var barHeight = 6;
@@ -18226,9 +18257,9 @@ Elm.Widget.make = function (_elm) {
          isVertical ? A2($Graphics$Element.spacer,
          20,
          10) : A2($Graphics$Element.spacer,10,20)));
-         var knotAndBar = $Graphics$Element.layers(_U.list([bar
-                                                           ,knot
-                                                           ,slideRect]));
+         var knotAndBar = A2($Graphics$Input.hoverable,
+         $Signal.message(hoverFlow.address),
+         $Graphics$Element.layers(_U.list([bar,knot,slideRect])));
          return {ctor: "_Tuple2",_0: knotAndBar,_1: pct};
       };
       return A2($Signal.map,render,posSignal);
@@ -18323,11 +18354,10 @@ Elm.VideoControl.make = function (_elm) {
    var StopVideo = {ctor: "StopVideo"};
    var PlayVideo = {ctor: "PlayVideo"};
    var videoOps = $Signal.mailbox(PlayVideo);
-   var clickSlider = F5(function (name,
+   var clickSlider = F4(function (name,
    width,
    initValue,
-   isVertical,
-   targetFlow) {
+   isVertical) {
       var editIcon = A2($Graphics$Input.clickable,
       A2($Signal.message,clickFlow.address,name),
       A3($Html.toElement,
@@ -18372,14 +18402,11 @@ Elm.VideoControl.make = function (_elm) {
       return A3($Signal.map2,
       dock,
       editStateSg,
-      A5($Widget.slider,name,width,initValue,isVertical,targetFlow));
+      A4($Widget.slider,name,width,initValue,isVertical));
    });
-   var timeSpanCtlSg = function (targetFlow) {
+   var timeSpanCtlSg = function () {
       var f = function (_p3) {
          var _p4 = _p3;
-         var slider = A2($Graphics$Input.hoverable,
-         $Signal.message(timeDeltaHover.address),
-         _p4._1);
          var t = A2(F2(function (x,y) {    return x + y;}),
          1,
          $Basics.round(_p4._2 * 23));
@@ -18398,13 +18425,11 @@ Elm.VideoControl.make = function (_elm) {
          return {ctor: "_Tuple4"
                 ,_0: timeNode
                 ,_1: _p4._0
-                ,_2: slider
+                ,_2: _p4._1
                 ,_3: t};
       };
-      return A2($Signal.map,
-      f,
-      A5(clickSlider,"timeDelta",100,0,true,targetFlow));
-   };
+      return A2($Signal.map,f,A4(clickSlider,"timeDelta",100,0,true));
+   }();
    var Tick = function (a) {    return {ctor: "Tick",_0: a};};
    var ops = function () {
       var clock_ = A2($Signal$Extra._op["<~"],Tick,$Time.fps(25));
@@ -18421,13 +18446,6 @@ Elm.VideoControl.make = function (_elm) {
    var videoControl = F4(function (t,videoStatus,_p6,_p5) {
       var _p7 = _p6;
       var _p8 = _p5;
-      var sliders = A2($Graphics$Element.beside,
-      A2($Graphics$Element.beside,
-      A2($Graphics$Element.beside,
-      A2($Graphics$Element.spacer,110,1),
-      _p7._2),
-      A2($Graphics$Element.spacer,530,1)),
-      _p8._2);
       var editIcon_2 = !_U.eq(videoStatus,
       Stop) ? A2($Graphics$Element.spacer,24,1) : _p8._1;
       var editIcon_1 = !_U.eq(videoStatus,
@@ -18485,49 +18503,59 @@ Elm.VideoControl.make = function (_elm) {
       40,
       20) : icon_stop);
       var wth = 820;
-      var ht = 40;
-      var ctls = $Graphics$Element.layers(_U.list([A2($Graphics$Element.opacity,
-                                                  0.85,
-                                                  A2($Graphics$Element.color,
-                                                  $Color.white,
-                                                  A2($Graphics$Element.spacer,wth,ht)))
-                                                  ,A2($Graphics$Element.below,
-                                                  A2($Graphics$Element.beside,
-                                                  A2($Graphics$Element.beside,
-                                                  A2($Graphics$Element.beside,
-                                                  A2($Graphics$Element.beside,
-                                                  A2($Graphics$Element.beside,
-                                                  A2($Graphics$Element.beside,
-                                                  A2($Graphics$Element.beside,
-                                                  A2($Graphics$Element.beside,
-                                                  A2($Graphics$Element.spacer,20,1),
-                                                  _p7._0),
-                                                  editIcon_1),
-                                                  A2($Graphics$Element.spacer,10,1)),
-                                                  progressBar),
-                                                  _p8._0),
-                                                  editIcon_2),
-                                                  A2($Graphics$Element.spacer,20,1)),
-                                                  icon_),
-                                                  A2($Graphics$Element.spacer,1,10))]));
-      return A4($Graphics$Element.container,
+      var sliders = A4($Graphics$Element.container,
       wth,
-      170,
+      160,
       A2($Graphics$Element.bottomLeftAt,
       $Graphics$Element.absolute(0),
       $Graphics$Element.absolute(0)),
-      A2($Graphics$Element.above,
+      A2($Graphics$Element.beside,
+      A2($Graphics$Element.beside,
+      A2($Graphics$Element.beside,
+      A2($Graphics$Element.spacer,110,1),
+      _p7._2),
+      A2($Graphics$Element.spacer,530,1)),
+      _p8._2));
+      var ht = 40;
+      var ctls = A4($Graphics$Element.container,
+      wth,
+      40,
+      A2($Graphics$Element.bottomLeftAt,
+      $Graphics$Element.absolute(0),
+      $Graphics$Element.absolute(0)),
+      $Graphics$Element.layers(_U.list([A2($Graphics$Element.opacity,
+                                       0.85,
+                                       A2($Graphics$Element.color,
+                                       $Color.white,
+                                       A2($Graphics$Element.spacer,wth,ht)))
+                                       ,A2($Graphics$Element.below,
+                                       A2($Graphics$Element.beside,
+                                       A2($Graphics$Element.beside,
+                                       A2($Graphics$Element.beside,
+                                       A2($Graphics$Element.beside,
+                                       A2($Graphics$Element.beside,
+                                       A2($Graphics$Element.beside,
+                                       A2($Graphics$Element.beside,
+                                       A2($Graphics$Element.beside,
+                                       A2($Graphics$Element.spacer,20,1),
+                                       _p7._0),
+                                       editIcon_1),
+                                       A2($Graphics$Element.spacer,10,1)),
+                                       progressBar),
+                                       _p8._0),
+                                       editIcon_2),
+                                       A2($Graphics$Element.spacer,20,1)),
+                                       icon_),
+                                       A2($Graphics$Element.spacer,1,10))])));
+      return A2($Graphics$Element.above,
       A2($Graphics$Element.above,
       sliders,
-      A2($Graphics$Element.spacer,1,10)),
-      ctls));
+      A2($Graphics$Element.spacer,wth,10)),
+      ctls);
    });
-   var startTimeCtlSg = function (targetFlow) {
+   var startTimeCtlSg = function () {
       var f = function (_p9) {
          var _p10 = _p9;
-         var slider = A2($Graphics$Input.hoverable,
-         $Signal.message(startTimeHover.address),
-         _p10._1);
          var t = A2(F2(function (x,y) {    return x + y;}),
          global_t0,
          $Basics.toFloat($Basics.round(_p10._2 * 23) * 3600000));
@@ -18544,13 +18572,11 @@ Elm.VideoControl.make = function (_elm) {
          return {ctor: "_Tuple4"
                 ,_0: timeNode
                 ,_1: _p10._0
-                ,_2: slider
+                ,_2: _p10._1
                 ,_3: t};
       };
-      return A2($Signal.map,
-      f,
-      A5(clickSlider,"startTime",100,0,true,targetFlow));
-   };
+      return A2($Signal.map,f,A4(clickSlider,"startTime",100,0,true));
+   }();
    var global_animation = A2($Animation.duration,
    240 * $Time.second,
    A2($Animation.to,
@@ -18576,7 +18602,7 @@ Elm.VideoControl.make = function (_elm) {
    trans,
    A2(State,0,Playing),
    ops);
-   var videoSg = function (targetFlow) {
+   var videoSg = function () {
       var aug = F3(function (state,_p13,_p12) {
          var _p14 = _p13;
          var _p15 = _p12;
@@ -18606,9 +18632,9 @@ Elm.VideoControl.make = function (_elm) {
       return A4($Signal.map3,
       aug,
       videoStateSg,
-      startTimeCtlSg(targetFlow),
-      timeSpanCtlSg(targetFlow));
-   };
+      startTimeCtlSg,
+      timeSpanCtlSg);
+   }();
    return _elm.VideoControl.values = {_op: _op
                                      ,global_animation: global_animation
                                      ,global_t0: global_t0
@@ -18644,42 +18670,123 @@ Elm.VehicleControl.make = function (_elm) {
    return _elm.VehicleControl.values;
    var _U = Elm.Native.Utils.make(_elm),
    $Basics = Elm.Basics.make(_elm),
+   $Color = Elm.Color.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Exts$Float = Elm.Exts.Float.make(_elm),
    $Graphics$Element = Elm.Graphics.Element.make(_elm),
    $Graphics$Input = Elm.Graphics.Input.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
-   $Html$Events = Elm.Html.Events.make(_elm),
    $List = Elm.List.make(_elm),
+   $List$Extra = Elm.List.Extra.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Set = Elm.Set.make(_elm),
    $Signal = Elm.Signal.make(_elm),
+   $String = Elm.String.make(_elm),
+   $Text = Elm.Text.make(_elm),
    $Widget = Elm.Widget.make(_elm);
    var _op = {};
-   var step = F2(function (op,lst) {
-      var _p0 = op;
-      if (_p0.ctor === "SelectVehicle") {
-            var _p1 = _p0._0;
-            var sel = _p0._1 ? A2($Set.insert,_p1,lst) : A2($Set.remove,
-            _p1,
-            lst);
-            return sel;
+   var getCheckMailbox = F2(function (mboxs,vId) {
+      var r = A2($List$Extra.find,
+      function (_p0) {
+         var _p1 = _p0;
+         return _U.eq(_p1._0,vId);
+      },
+      mboxs);
+      var _p2 = r;
+      if (_p2.ctor === "Just" && _p2._0.ctor === "_Tuple2") {
+            return _p2._0._1;
          } else {
-            return lst;
+            return $Signal.mailbox(false);
          }
    });
-   var tailLengthHover = $Signal.mailbox(false);
-   var tailSg = function (targetFlow) {
-      var wrap = function (_p2) {
-         var _p3 = _p2;
-         var slider = A2($Graphics$Input.hoverable,
-         $Signal.message(tailLengthHover.address),
-         _p3._0);
+   var global_colors = _U.list([$Color.red
+                               ,$Color.blue
+                               ,$Color.brown
+                               ,$Color.orange
+                               ,$Color.darkGreen]);
+   var global_vehicleList = _U.list([2012347
+                                    ,2017231
+                                    ,2030413
+                                    ,2036207
+                                    ,2026201]);
+   var checkMailboxes = A2($List.map,
+   function (i) {
+      return {ctor: "_Tuple2",_0: i,_1: $Signal.mailbox(true)};
+   },
+   global_vehicleList);
+   var vehicleListSg = function () {
+      var foldStep = F2(function (_p3,sett) {
+         var _p4 = _p3;
+         var mapStep = F2(function (checked,sett) {
+            return checked ? A2($Set.insert,_p4._0,sett) : sett;
+         });
+         return A3($Signal.map2,mapStep,_p4._1.signal,sett);
+      });
+      return A3($List.foldr,
+      foldStep,
+      $Signal.constant($Set.empty),
+      checkMailboxes);
+   }();
+   var checkBoxes = function (vlist) {
+      var title = $Graphics$Element.leftAligned($Text.bold(A2($Text.height,
+      22,
+      $Text.fromString("Vehicles"))));
+      var addr = function (vId) {
+         return function (_) {
+            return _.address;
+         }(A2(getCheckMailbox,checkMailboxes,vId));
+      };
+      var id2Name = F2(function (colorr,vid) {
+         return A2($Text.color,
+         colorr,
+         A2($Text.height,
+         22,
+         $Text.fromString(A2($String.append,
+         "#",
+         $Basics.toString(vid - 2000000)))));
+      });
+      var box = F2(function (vId,colorr) {
+         return A2($Graphics$Element.beside,
+         A2($Graphics$Element.beside,
+         A3($Graphics$Element.size,
+         20,
+         22,
+         A2($Graphics$Input.checkbox,
+         $Signal.message(addr(vId)),
+         A2($Set.member,vId,vlist))),
+         A2($Graphics$Element.spacer,10,1)),
+         $Graphics$Element.leftAligned(A2(id2Name,colorr,vId)));
+      });
+      var cBoxList = A3($List.map2,
+      box,
+      global_vehicleList,
+      global_colors);
+      var cBoxes = A3($List.foldr,
+      F2(function (a,state) {
+         return A2($Graphics$Element.above,a,state);
+      }),
+      $Graphics$Element.empty,
+      cBoxList);
+      return A2($Graphics$Element.above,
+      A2($Graphics$Element.above,
+      A2($Graphics$Element.spacer,1,10),
+      A2($Graphics$Element.beside,
+      A2($Graphics$Element.spacer,10,1),
+      title)),
+      A2($Graphics$Element.above,
+      A2($Graphics$Element.spacer,1,20),
+      A2($Graphics$Element.beside,
+      A2($Graphics$Element.spacer,20,1),
+      cBoxes)));
+   };
+   var tailSg = function () {
+      var wrap = function (_p5) {
+         var _p6 = _p5;
          var pct_ = $Basics.round(A2($Exts$Float.roundTo,
          2,
-         _p3._1) * 120);
+         _p6._1) * 120);
          var pct__ = pct_ - A2($Basics._op["%"],pct_,5);
          var title = A3($Html.toElement,
          160,
@@ -18696,22 +18803,18 @@ Elm.VehicleControl.make = function (_elm) {
          var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
          A2($Graphics$Element.beside,
          A2($Graphics$Element.spacer,20,1),
-         slider),
+         _p6._0),
          title)]));
          return {ctor: "_Tuple2",_0: wrappedSlider,_1: pct__};
       };
       return A2($Signal.map,
       wrap,
-      A5($Widget.slider,"tailLength",100,0.5,false,targetFlow));
-   };
-   var mapAlphaHover = $Signal.mailbox(false);
-   var mapAlphaSg = function (targetFlow) {
-      var wrap = function (_p4) {
-         var _p5 = _p4;
-         var slider = A2($Graphics$Input.hoverable,
-         $Signal.message(mapAlphaHover.address),
-         _p5._0);
-         var pct_ = A2($Exts$Float.roundTo,2,_p5._1);
+      A4($Widget.slider,"tailLength",100,0.5,false));
+   }();
+   var mapAlphaSg = function () {
+      var wrap = function (_p7) {
+         var _p8 = _p7;
+         var pct_ = A2($Exts$Float.roundTo,2,_p8._1);
          var title = A3($Html.toElement,
          160,
          40,
@@ -18727,32 +18830,18 @@ Elm.VehicleControl.make = function (_elm) {
          var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
          A2($Graphics$Element.beside,
          A2($Graphics$Element.spacer,20,1),
-         slider),
+         _p8._0),
          title)]));
          return {ctor: "_Tuple2",_0: wrappedSlider,_1: pct_};
       };
       return A2($Signal.map,
       wrap,
-      A5($Widget.slider,"mapAlpha",100,0.6,false,targetFlow));
-   };
-   var traceAlphaHover = $Signal.mailbox(false);
-   var targetFlow = function () {
-      var merge = F3(function (traceAlpha,mapAlpha,tailLength) {
-         return traceAlpha ? "traceAlpha" : mapAlpha ? "mapAlpha" : tailLength ? "tailLength" : "nothing";
-      });
-      return A4($Signal.map3,
-      merge,
-      traceAlphaHover.signal,
-      mapAlphaHover.signal,
-      tailLengthHover.signal);
+      A4($Widget.slider,"mapAlpha",100,0.6,false));
    }();
-   var traceAlphaSg = function (targetFlow) {
-      var wrap = function (_p6) {
-         var _p7 = _p6;
-         var slider = A2($Graphics$Input.hoverable,
-         $Signal.message(traceAlphaHover.address),
-         _p7._0);
-         var pct_ = A2($Exts$Float.roundTo,2,_p7._1);
+   var traceAlphaSg = function () {
+      var wrap = function (_p9) {
+         var _p10 = _p9;
+         var pct_ = A2($Exts$Float.roundTo,2,_p10._1);
          var title = A3($Html.toElement,
          160,
          40,
@@ -18768,111 +18857,23 @@ Elm.VehicleControl.make = function (_elm) {
          var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
          A2($Graphics$Element.beside,
          A2($Graphics$Element.spacer,20,1),
-         slider),
+         _p10._0),
          title)]));
          return {ctor: "_Tuple2",_0: wrappedSlider,_1: pct_};
       };
       return A2($Signal.map,
       wrap,
-      A5($Widget.slider,"traceAlpha",100,0,false,targetFlow));
-   };
-   var Nil = {ctor: "Nil"};
-   var vehicleOps = $Signal.mailbox(Nil);
-   var vehicleListSg = A3($Signal.foldp,
-   step,
-   $Set.fromList(_U.list([2012347
-                         ,2017231
-                         ,2030413
-                         ,2036207
-                         ,2026201])),
-   vehicleOps.signal);
-   var SelectVehicle = F2(function (a,b) {
-      return {ctor: "SelectVehicle",_0: a,_1: b};
-   });
-   var checkbox = F4(function (isChecked,vid,name,colr) {
-      return _U.list([A2($Html.input,
-                     _U.list([$Html$Attributes.type$("checkbox")
-                             ,$Html$Attributes.checked(isChecked)
-                             ,A3($Html$Events.on,
-                             "change",
-                             $Html$Events.targetChecked,
-                             function (_p8) {
-                                return A2($Signal.message,
-                                vehicleOps.address,
-                                A2(SelectVehicle,vid,_p8));
-                             })]),
-                     _U.list([]))
-                     ,A2($Html.span,
-                     _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
-                                                              ,_0: "font-size"
-                                                              ,_1: "x-large"}
-                                                             ,{ctor: "_Tuple2",_0: "color",_1: colr}]))]),
-                     _U.list([$Html.text(name)]))
-                     ,A2($Html.br,_U.list([]),_U.list([]))]);
-   });
-   var checkBoxes = function (vlist) {
-      return A3($Html.toElement,
-      160,
-      200,
-      A2($Html.div,
-      _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
-                                               ,_0: "padding-left"
-                                               ,_1: "10px"}]))]),
-      A2($List._op["::"],
-      A2($Html.span,
-      _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
-                                               ,_0: "font-size"
-                                               ,_1: "x-large"}
-                                              ,{ctor: "_Tuple2",_0: "font-weight",_1: "bold"}]))]),
-      _U.list([$Html.text("Vehicles")])),
-      A2($List._op["::"],
-      A2($Html.br,_U.list([]),_U.list([])),
-      A2($List._op["::"],
-      A2($Html.br,_U.list([]),_U.list([])),
-      A2($Basics._op["++"],
-      A4(checkbox,
-      A2($Set.member,2012347,vlist),
-      2012347,
-      "  #12347",
-      "red"),
-      A2($Basics._op["++"],
-      A4(checkbox,
-      A2($Set.member,2017231,vlist),
-      2017231,
-      "  #17231",
-      "blue"),
-      A2($Basics._op["++"],
-      A4(checkbox,
-      A2($Set.member,2030413,vlist),
-      2030413,
-      "  #30413",
-      "brown"),
-      A2($Basics._op["++"],
-      A4(checkbox,
-      A2($Set.member,2036207,vlist),
-      2036207,
-      "  #36207",
-      "orange"),
-      A4(checkbox,
-      A2($Set.member,2026201,vlist),
-      2026201,
-      "  #26201",
-      "darkGreen"))))))))));
-   };
+      A4($Widget.slider,"traceAlpha",100,0,false));
+   }();
    return _elm.VehicleControl.values = {_op: _op
-                                       ,SelectVehicle: SelectVehicle
-                                       ,Nil: Nil
-                                       ,vehicleOps: vehicleOps
-                                       ,traceAlphaHover: traceAlphaHover
-                                       ,mapAlphaHover: mapAlphaHover
-                                       ,tailLengthHover: tailLengthHover
-                                       ,targetFlow: targetFlow
                                        ,traceAlphaSg: traceAlphaSg
                                        ,mapAlphaSg: mapAlphaSg
                                        ,tailSg: tailSg
+                                       ,global_vehicleList: global_vehicleList
+                                       ,global_colors: global_colors
+                                       ,checkMailboxes: checkMailboxes
+                                       ,getCheckMailbox: getCheckMailbox
                                        ,checkBoxes: checkBoxes
-                                       ,checkbox: checkbox
-                                       ,step: step
                                        ,vehicleListSg: vehicleListSg};
 };
 Elm.Main = Elm.Main || {};
@@ -18888,6 +18889,7 @@ Elm.Main.make = function (_elm) {
    $FontAwesome = Elm.FontAwesome.make(_elm),
    $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
    $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $Graphics$Input = Elm.Graphics.Input.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
@@ -18902,6 +18904,7 @@ Elm.Main.make = function (_elm) {
    $VehicleControl = Elm.VehicleControl.make(_elm),
    $VideoControl = Elm.VideoControl.make(_elm);
    var _op = {};
+   var shadowFlow = $Signal.mailbox(false);
    var render = F7(function (mapp,
    _p3,
    data,
@@ -18956,7 +18959,7 @@ Elm.Main.make = function (_elm) {
       var baseMap = $TileMap.loadMap(mapp);
       var h = $Basics.snd(mapp.size);
       var progressBar_ = A2($Graphics$Collage.move,
-      {ctor: "_Tuple2",_0: 0,_1: 110 - $Basics.toFloat(h) / 2},
+      {ctor: "_Tuple2",_0: 0,_1: 120 - $Basics.toFloat(h) / 2},
       $Graphics$Collage.toForm(_p4._1));
       var w = $Basics.fst(mapp.size);
       var anologClock_ = A2($Graphics$Collage.move,
@@ -18985,7 +18988,9 @@ Elm.Main.make = function (_elm) {
       {ctor: "_Tuple2"
       ,_0: 100 - $Basics.toFloat(w) / 2
       ,_1: $Basics.toFloat(h) / 2 - 380},
-      $Graphics$Collage.toForm(vehicleStateView));
+      $Graphics$Collage.toForm(A2($Graphics$Input.hoverable,
+      $Signal.message(shadowFlow.address),
+      vehicleStateView)));
       var gitLink = function () {
          var b = A2($Graphics$Element.opacity,
          0.85,
@@ -19037,8 +19042,6 @@ Elm.Main.make = function (_elm) {
               ,vehicleStateView_
               ,gitLink]));
    });
-   var global_targetFlow = $Signal.mergeMany(_U.list([$VehicleControl.targetFlow
-                                                     ,$VideoControl.targetFlow]));
    var global_icons = _U.list([$FontAwesome.truck
                               ,$FontAwesome.ambulance
                               ,$FontAwesome.taxi
@@ -19107,7 +19110,7 @@ Elm.Main.make = function (_elm) {
    A3($MapControl.mapSg,
    mouseWheelIn,
    screenSizeIn,
-   global_targetFlow));
+   shadowFlow.signal));
    var main = A4($Signal.map3,
    F3(function (x,y,z) {    return A2(x,y,z);}),
    A6($Signal.map5,
@@ -19115,18 +19118,18 @@ Elm.Main.make = function (_elm) {
    A3($MapControl.mapSg,
    mouseWheelIn,
    screenSizeIn,
-   global_targetFlow),
-   $VideoControl.videoSg(global_targetFlow),
+   shadowFlow.signal),
+   $VideoControl.videoSg,
    dataSg,
-   $VehicleControl.traceAlphaSg(global_targetFlow),
-   $VehicleControl.mapAlphaSg(global_targetFlow)),
-   $VehicleControl.tailSg(global_targetFlow),
+   $VehicleControl.traceAlphaSg,
+   $VehicleControl.mapAlphaSg),
+   $VehicleControl.tailSg,
    $VehicleControl.vehicleListSg);
    return _elm.Main.values = {_op: _op
                              ,global_colors: global_colors
                              ,global_icons: global_icons
+                             ,shadowFlow: shadowFlow
                              ,dataSg: dataSg
-                             ,global_targetFlow: global_targetFlow
                              ,render: render
                              ,main: main};
 };

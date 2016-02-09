@@ -8,62 +8,40 @@ import Graphics.Element exposing (..)
 import Graphics.Input
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (on, targetChecked)
+import Html.Events exposing (..)
 import Widget
-
-type VehicleOps = SelectVehicle Int Bool | Nil
-    
-vehicleOps : Signal.Mailbox VehicleOps
-vehicleOps = Signal.mailbox Nil
-
-traceAlphaHover: Signal.Mailbox Bool
-traceAlphaHover = Signal.mailbox False
-
-mapAlphaHover: Signal.Mailbox Bool
-mapAlphaHover = Signal.mailbox False
-
-tailLengthHover: Signal.Mailbox Bool
-tailLengthHover = Signal.mailbox False
-
-targetFlow = 
-    let 
-        merge traceAlpha mapAlpha tailLength = 
-            if traceAlpha then "traceAlpha"
-            else if mapAlpha then "mapAlpha"
-            else if tailLength then "tailLength"
-            else "nothing"
-    in
-        Signal.map3 merge traceAlphaHover.signal mapAlphaHover.signal tailLengthHover.signal
+import Set
+import List.Extra
+import Text
+import String
         
-traceAlphaSg targetFlow = 
+traceAlphaSg = 
     let
         wrap (slider_, pct) = 
             let
                 pct_ = Exts.Float.roundTo 2 pct
                 title = Html.span [style [("padding-left", "10px"),("font-weight", "bold"),("font-size", "large")]] 
                         [Html.text ("Trace Alpha: " ++ (toString pct_))] |> Html.toElement 160 40
-                slider = slider_ |> Graphics.Input.hoverable (Signal.message traceAlphaHover.address)
-                wrappedSlider = layers [spacer 20 1 `beside` slider `below` title]
+                wrappedSlider = layers [spacer 20 1 `beside` slider_ `below` title]
             in
                 (wrappedSlider, pct_)
     in
-        Signal.map wrap (Widget.slider "traceAlpha" 100 0 False targetFlow) 
+        Signal.map wrap (Widget.slider "traceAlpha" 100 0 False) 
 
-mapAlphaSg targetFlow = 
+mapAlphaSg = 
     let
         wrap (slider_, pct) = 
             let
                 pct_ = Exts.Float.roundTo 2 pct
                 title = Html.span [style [("padding-left", "10px"),("font-weight", "bold"),("font-size", "large")]] 
                         [Html.text ("Map Alpha: " ++ (toString pct_))] |> Html.toElement 160 40
-                slider = slider_ |> Graphics.Input.hoverable (Signal.message mapAlphaHover.address)
-                wrappedSlider = layers [spacer 20 1 `beside` slider `below` title]
+                wrappedSlider = layers [spacer 20 1 `beside` slider_ `below` title]
             in
                 (wrappedSlider, pct_)
     in
-        Signal.map wrap (Widget.slider "mapAlpha" 100 0.6 False targetFlow) 
+        Signal.map wrap (Widget.slider "mapAlpha" 100 0.6 False) 
         
-tailSg targetFlow = 
+tailSg = 
     let
         wrap (slider_, pct) = 
             let
@@ -71,53 +49,49 @@ tailSg targetFlow =
                 pct__ = pct_ - (pct_ % 5)
                 title = Html.span [style [("padding-left", "10px"),("font-weight", "bold"),("font-size", "large")]] 
                         [Html.text ("Tail: " ++ (toString pct__) ++ " minutes")] |> Html.toElement 160 40
-                slider = slider_ |> Graphics.Input.hoverable (Signal.message tailLengthHover.address)
-                wrappedSlider = layers [spacer 20 1 `beside` slider `below` title]
+                wrappedSlider = layers [spacer 20 1 `beside` slider_ `below` title]
             in
                 (wrappedSlider, pct__)
     in
-        Signal.map wrap (Widget.slider "tailLength" 100 0.5 False targetFlow) 
-       
-checkBoxes vlist =
-  (div [style [("padding-left", "10px")]] <|
-        Html.span [style [("font-size", "x-large"), ("font-weight", "bold")]] [Html.text "Vehicles"]
-        :: br [] []
-        :: br [] []
-        :: checkbox (Set.member 2012347 vlist) 2012347 "  #12347" "red"
-        ++ checkbox (Set.member 2017231 vlist) 2017231 "  #17231" "blue"
-        ++ checkbox (Set.member 2030413 vlist) 2030413 "  #30413" "brown"
-        ++ checkbox (Set.member 2036207 vlist) 2036207 "  #36207" "orange"
-        ++ checkbox (Set.member 2026201 vlist) 2026201 "  #26201" "darkGreen")
-    |> (Html.toElement 160 200)
-    
-checkbox : Bool -> Int -> String -> String -> List Html
-checkbox isChecked vid name colr =
-  [ input
-      [ type' "checkbox"
-      , checked isChecked
-      , on "change" targetChecked (Signal.message vehicleOps.address << (SelectVehicle vid))
-      ]
-      []
-  , Html.span [style [("font-size", "x-large"), ("color", colr)]] [Html.text name]
-  , br [] []
-  ]
+        Signal.map wrap (Widget.slider "tailLength" 100 0.5 False) 
 
-step : VehicleOps -> Set Int -> Set Int
-step op lst = 
-    case op of
-        SelectVehicle id flag -> 
-            let
-                sel = if flag 
-                        then
-                            Set.insert id lst
-                        else
-                            Set.remove id lst
-            in
-                sel
-        _ -> lst
+global_vehicleList = [2012347, 2017231, 2030413, 2036207, 2026201]
+global_colors = [Color.red, Color.blue, Color.brown, Color.orange, Color.darkGreen]
+
+checkMailboxes : List (Int, Signal.Mailbox Bool)
+checkMailboxes = List.map (\i -> (i, Signal.mailbox True)) global_vehicleList
+
+getCheckMailbox mboxs vId = 
+    let
+        r = List.Extra.find (\(id, _) -> id == vId) mboxs
+    in
+        case r of
+            Just (_, mbox) -> mbox
+            _ -> Signal.mailbox False
+
+checkBoxes vlist =
+    let
+        id2Name colorr vid = vid - 2000000 |> toString |> String.append "#" |> Text.fromString |> Text.height 22 |> Text.color colorr
+        addr vId = getCheckMailbox checkMailboxes vId |> .address
+        box vId colorr = (Graphics.Input.checkbox (Signal.message (addr vId)) (Set.member vId vlist) |> (Graphics.Element.size 20 22) )
+                    `beside` spacer 10 1 `beside` (vId |> (id2Name colorr) |> leftAligned) 
+        cBoxList = List.map2 box global_vehicleList global_colors
+        cBoxes = List.foldr (\a state -> a `above` state) Graphics.Element.empty cBoxList
+        title = "Vehicles" |> Text.fromString |> Text.height 22 |> Text.bold |> leftAligned
+    in
+        spacer 1 10 `above` (spacer 10 1 `beside` title) `above` (spacer 1 20 `above` ((spacer 20 1) `beside` cBoxes))
         
 vehicleListSg : Signal (Set Int)
 vehicleListSg = 
-    Signal.foldp step (Set.fromList [2012347, 2017231, 2030413, 2036207, 2026201]) vehicleOps.signal       
+    let
+        foldStep (vid, mBox) sett = 
+            let
+                mapStep checked sett = if checked then Set.insert vid sett else sett
+            in
+                Signal.map2 mapStep mBox.signal sett
+    in
+        List.foldr foldStep (Signal.constant Set.empty) checkMailboxes
+        
+
     
     

@@ -13,8 +13,8 @@ import FontAwesome
 import Html exposing (..)
 import Html.Events exposing (..)
 
-slider : String -> Int -> Float -> Bool -> Signal String ->Signal (Element, Float)
-slider name width initValue isVertical targetFlow = 
+slider : String -> Int -> Float -> Bool ->Signal (Element, Float)
+slider name width initValue isVertical = 
     let
         knotHeight = 20
         knotWidth = 10
@@ -25,23 +25,31 @@ slider name width initValue isVertical targetFlow =
         lPos = knotWidthHalf
         rPos = width - knotWidthHalf
         initPosition = ((initValue * (toFloat (width - knotWidth))) |> round) + knotWidthHalf
+        
+        check (s, m) = 
+            if not s then False
+            else
+                case m of
+                    MoveFromTo _ _ -> True
+                    _ -> False
+                    
+        filteredMouseEvt = Signal.Extra.zip hoverFlow.signal Drag.mouseEvents |> Signal.filter check (False, StartAt (0,0)) |> Signal.map snd
+        
         sliderOps : Signal Int
         sliderOps = 
             let
-                merge target msEvt =
+                merge msEvt =
                     let
-                        d = Debug.log "target" target
+                        d = 3 --Debug.log "msEvt" msEvt
                     in
-                        if target == name then
-                            case msEvt of
-                                MoveFromTo (x0,y0) (x1, y1) ->
-                                    if isVertical
-                                    then (y0 - y1)
-                                    else (x1 - x0)
-                                _ -> 0
-                        else 0
+                        case msEvt of
+                            MoveFromTo (x0,y0) (x1, y1) ->
+                                if isVertical
+                                then (y0 - y1)
+                                else (x1 - x0)
+                            _ -> 0
             in
-                Signal.map2 merge targetFlow Drag.mouseEvents
+                Signal.map merge filteredMouseEvt
         
         step a acc = (a + acc) |> Basics.min rPos |> Basics.max lPos
         posSignal = Signal.foldp step initPosition sliderOps
@@ -59,6 +67,10 @@ slider name width initValue isVertical targetFlow =
                 spacer knotHeight width
             else
                 spacer width knotHeight
+                
+        hoverFlow: Signal.Mailbox Bool
+        hoverFlow = Signal.mailbox False
+
         render x = 
             let
                 knot = (if isVertical 
@@ -67,7 +79,7 @@ slider name width initValue isVertical targetFlow =
                      |> if isVertical 
                         then (container 20 width  (middleAt (absolute knotHeightHalf) (absolute (width - x)))) 
                         else (container width 20 (middleAt (absolute x) (absolute knotHeightHalf)))
-                knotAndBar = layers [bar, knot, slideRect]
+                knotAndBar = layers [bar, knot, slideRect] |> Graphics.Input.hoverable (Signal.message hoverFlow.address)
                 pct = ((x - knotWidthHalf) |> toFloat) / ((width - knotWidth) |> toFloat)
             in
                 (knotAndBar, pct)
