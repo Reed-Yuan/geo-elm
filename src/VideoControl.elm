@@ -25,7 +25,11 @@ import Mouse
 import Widget
 import MapControl exposing (..)
 
-global_animation = animation 0 |> from global_t0 |> to global_t1 |> duration (240*Time.second)
+animationSg = 
+    let
+        anim startTime timeDelta = animation 0 |> from startTime |> to (startTime + (toFloat timeDelta) * 3600000) |> duration (240*Time.second)
+    in
+        Signal.map2 anim startTimeSg timeDeltaSg
 
 global_t0 = Utils.timeFromString "2016-01-11T00:00:00"
 global_t1 = Utils.timeFromString "2016-01-12T00:00:00"
@@ -55,7 +59,8 @@ trans op state =
     case op of
         Tick t -> 
             let
-                isVideoDone = isDone state.clock global_animation
+                --isVideoDone = isDone state.clock animationSg
+                isVideoDone = False
             in    
                 if state.videoStatus == Playing && not isVideoDone
                     then {state | clock = state.clock + t}
@@ -82,13 +87,13 @@ videoControl t videoStatus (startTime, iconnA, sliderA, t0) (timeDelta, iconnB, 
         darkBar = segment (0,0) (400, 0) |> traced { defaultLine | width = 10, color = darkGrey } |> moveX -210
         p = (t - global_t0) / (global_t1 - global_t0) * 400 
         progress = segment (0,0) (p, 0) |> traced { defaultLine | width = 10, color = red } |> moveX -210
-        progressBar = layers [spacer 440 30 |> color white |> opacity 0.85, spacer 1 10 `above` collage 440 10 [darkBar, progress]]
+        progressBar = collage 440 10 [darkBar, progress] `below` spacer 1 5
         editIcon_1 = if (videoStatus /= Stop) then spacer 24 1 else iconnA
         editIcon_2 = if (videoStatus /= Stop) then spacer 24 1 else iconnB
         ctls = layers [spacer wth ht |> color white |> opacity 0.85,
                 spacer 20 1 `beside` startTime `beside` editIcon_1 `beside` spacer 10 1 `beside` progressBar 
                 `beside` timeDelta  `beside` editIcon_2 `beside` spacer 20 1 `beside` icon_ `below` spacer 1 10]
-                |> container wth 40 (bottomLeftAt (absolute 0) (absolute 0))
+                |> container wth 40 (bottomLeftAt (absolute 0) (absolute 0)) |> Graphics.Input.hoverable (Signal.message shadowFlow.address)
         sliderA_ = if (videoStatus /= Stop) then empty else sliderA |> Graphics.Input.hoverable (Signal.message shadowFlow.address)        
         sliderB_ = if (videoStatus /= Stop) then empty else sliderB |> Graphics.Input.hoverable (Signal.message shadowFlow.address)        
         sliders = spacer 110 1 `beside` sliderA_ `beside` spacer 530 1 `beside` sliderB_
@@ -110,30 +115,15 @@ clockk t =
 
 videoSg shadowFlow = 
     let
-        aug state (startTime, iconnA, sliderA, t0) (timeSpan, iconnB, sliderB, tDelta) =
+        aug state (startTime, iconnA, sliderA, t0) (timeSpan, iconnB, sliderB, tDelta) anime =
             let
-                t = animate state.clock global_animation
+                t = animate state.clock anime
                 progressBar = videoControl t state.videoStatus (startTime, iconnA, sliderA, t0) (timeSpan, iconnB, sliderB, tDelta) shadowFlow
                 (anologClock, digitClock) = clockk t
             in
                 (t, progressBar, anologClock, digitClock)
     in
-        Signal.map3 aug videoStateSg startTimeCtlSg timeSpanCtlSg 
-
-startTimeHover: Signal.Mailbox Bool
-startTimeHover = Signal.mailbox False
-
-timeDeltaHover: Signal.Mailbox Bool
-timeDeltaHover = Signal.mailbox False
-
-targetFlow = 
-    let 
-        merge startTime timeDelta = 
-            if startTime then "startTime"
-            else if timeDelta then "timeDelta"
-            else "nothing"
-    in
-        Signal.map2 merge startTimeHover.signal timeDeltaHover.signal
+        Signal.map4 aug videoStateSg startTimeCtlSg timeSpanCtlSg animationSg
 
 startTimeCtlSg = 
     let
@@ -147,6 +137,9 @@ startTimeCtlSg =
                 ( timeNode, iconn, sliderr, t)
     in
         Signal.map f (clickSlider "startTime" 100 0 True)
+        
+startTimeSg = Signal.map (\(_, _, _, t) -> t) startTimeCtlSg
+timeDeltaSg = Signal.map (\(_, _, _, t) -> t) timeSpanCtlSg
 
 timeSpanCtlSg = 
     let
@@ -155,11 +148,11 @@ timeSpanCtlSg =
                 t =  pct * 23 |> round |> (+) 1
                 timeNode = Html.span 
                             [style [("font-size", "large"), ("font-weight", "bold"), ("color", "blue")]] 
-                            [Html.text ("+ " ++ (toString t) ++ " hours")] |> (Html.toElement 100 30)
+                            [Html.text ("[ " ++ (toString t) ++ (if t == 1 then " hour" else " hours") ++ " ]")] |> (Html.toElement 100 30)
             in
                 ( timeNode, iconn, sliderr, t)
     in
-        Signal.map f (clickSlider "timeDelta" 100 0 True)
+        Signal.map f (clickSlider "timeDelta" 100 1 True)
 
 clickFlow : Signal.Mailbox String
 clickFlow = Signal.mailbox ""

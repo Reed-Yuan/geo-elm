@@ -32,7 +32,8 @@ shadowFlow : Signal.Mailbox Bool
 shadowFlow = Signal.mailbox False
 
 dataSg : Signal (List VehiclTrace)
-dataSg = Signal.map2 (\gps mapp -> List.map3 (\x y z -> Data.parseGps x y z mapp) gps global_colors global_icons) vehicleIn (mapSg mouseWheelIn screenSizeIn shadowFlow.signal)
+dataSg = Signal.map4 (\gps mapp startTime timeDelta -> List.map3 (\x y z -> Data.parseGps x y z mapp startTime timeDelta) gps global_colors global_icons) 
+            vehicleIn (mapSg mouseWheelIn screenSizeIn shadowFlow.signal) VideoControl.startTimeSg VideoControl.timeDeltaSg
 
 render : TileMap.Map -> (Time, Element, Form, Element) -> List Data.VehiclTrace -> VehicleOptions -> Element
 render  mapp (t, progressBar, anologClock, digitClock) data vehicleOptions = 
@@ -58,7 +59,7 @@ render  mapp (t, progressBar, anologClock, digitClock) data vehicleOptions =
         bck = spacer 160 500 |> color white |> opacity 0.85
         checkBoxes_ = checkBoxes vehicleList
         vehicleStateView = layers [bck, mapAlpha `below` (spacer 1 30) `below` tailLength `below` (spacer 1 30) `below` traceAlpha `below` (spacer 1 30) `below` checkBoxes_]
-        vehicleStateView_ = vehicleStateView |> Graphics.Input.hoverable (Signal.message shadowFlow.address) |> toForm |> move (100 - (toFloat w)/2, (toFloat h)/2 - 380)
+        vehicleStateView_ = vehicleStateView |> toForm |> move (100 - (toFloat w)/2, (toFloat h)/2 - 380)
         gitLink =
                 let
                     a = Text.fromString "Source code @GitHub" |> Text.link "https://github.com/Reed-Yuan/geo-elm.git" |> Text.height 22 |> leftAligned
@@ -71,5 +72,5 @@ render  mapp (t, progressBar, anologClock, digitClock) data vehicleOptions =
         collage w h [toForm baseMap |> alpha malpha, fullTrace, vehicleTrace, info, title, anologClock_, digitClock_, progressBar_, vehicleStateView_, gitLink]
 
 main : Signal Element
-main = Signal.map4 render (mapSg mouseWheelIn screenSizeIn shadowFlow.signal) (VideoControl.videoSg shadowFlow) dataSg vehicleOptionsSg
+main = Signal.map4 render (mapSg mouseWheelIn screenSizeIn shadowFlow.signal) (VideoControl.videoSg shadowFlow) dataSg (vehicleOptionsSg shadowFlow)
         
