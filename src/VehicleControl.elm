@@ -25,7 +25,7 @@ type alias VehicleOptions =
         
 traceAlphaSg = 
     let
-        (sliderSg, shadowFlow) = Widget.slider "traceAlpha" 100 0 False (Signal.constant True)
+        (sliderSg, shadowFlow) = Widget.slider "traceAlpha" 100 0.1 False (Signal.constant True)
         wrap (slider_, pct) = 
             let
                 pct_ = Exts.Float.roundTo 2 pct
@@ -39,7 +39,7 @@ traceAlphaSg =
 
 mapAlphaSg = 
     let
-        (sliderSg, shadowFlow) = Widget.slider "mapAlpha" 100 0.6 False (Signal.constant True)
+        (sliderSg, shadowFlow) = Widget.slider "mapAlpha" 100 0.5 False (Signal.constant True)
         wrap (slider_, pct) = 
             let
                 pct_ = Exts.Float.roundTo 2 pct

@@ -104,7 +104,7 @@ digitalClockSg =
         
 startTimeCtlSg = 
     let
-        (sliderSg, shadowFlow) = Widget.slider "startTime" 100 0 False (Signal.map ((==) Stop) videoOps.signal)
+        (sliderSg, shadowFlow) = Widget.slider "startTime" 100 0.2 False (Signal.map ((==) Stop) videoOps.signal)
         f (slider_, pct) =
             let
                 t =  ((pct * 23 |> round) * 3600000) |> toFloat |> (+) global_t0
@@ -118,7 +118,7 @@ startTimeCtlSg =
 
 timeSpanCtlSg = 
     let
-        (sliderSg, shadowFlow) = Widget.slider "timeDelta" 100 1 False (Signal.map ((==) Stop) videoOps.signal)
+        (sliderSg, shadowFlow) = Widget.slider "timeDelta" 100 0.3 False (Signal.map ((==) Stop) videoOps.signal)
         f (slider_, pct) =
             let
                 t =  pct * 23 |> round |> (+) 1

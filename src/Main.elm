@@ -67,11 +67,11 @@ render  mapp videoOptions data vehicleOptions =
         baseMap = TileMap.loadMap mapp
         filteredTraces = List.filter (\(id_, _, _, _, _, _) -> Set.member id_ vehicleList) data
         anologClock_ = videoOptions.anologClock |> move ((toFloat w)/2 - 280, (toFloat h)/2 - 70)
-        digitClock_ = videoOptions.digitClock |> toForm |> move ((toFloat w)/2 - 100, (toFloat h)/2 - 30)
+        digitClock_ = videoOptions.digitClock |> toForm |> move ((toFloat w)/2 - 100, (toFloat h)/2 - 50)
         progressBar_ = videoOptions.progressBar |> toForm |> move (0, 40 - (toFloat h)/2)
         traceWithInfo = List.map (\vtrace -> showTrace vtrace videoOptions.time tl mapp) filteredTraces |> List.unzip
         vehicleTrace = fst traceWithInfo |> group
-        info = (snd traceWithInfo) |> (List.foldr above Graphics.Element.empty) |> container 160 800 (midTopAt (absolute 80) (absolute 0))
+        info = (snd traceWithInfo) |> (List.foldr above Graphics.Element.empty) |> container 160 800 (midTopAt (absolute 80) (absolute 40))
                 |> toForm |> move ((toFloat w)/2 - 100, 0)
         fullTrace = List.map (\(_, _, _, _, vtrace, _) -> vtrace) filteredTraces |> group |> alpha talpha
         bck = spacer 160 580 |> color white |> opacity 0.85

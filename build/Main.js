@@ -18354,7 +18354,7 @@ Elm.VideoControl.make = function (_elm) {
       var _p2 = A5($Widget.slider,
       "timeDelta",
       100,
-      1,
+      0.3,
       false,
       A2($Signal.map,
       F2(function (x,y) {    return _U.eq(x,y);})(Stop),
@@ -18403,7 +18403,7 @@ Elm.VideoControl.make = function (_elm) {
       var _p7 = A5($Widget.slider,
       "startTime",
       100,
-      0,
+      0.2,
       false,
       A2($Signal.map,
       F2(function (x,y) {    return _U.eq(x,y);})(Stop),
@@ -18791,7 +18791,7 @@ Elm.VehicleControl.make = function (_elm) {
       var _p10 = A5($Widget.slider,
       "mapAlpha",
       100,
-      0.6,
+      0.5,
       false,
       $Signal.constant(true));
       var sliderSg = _p10._0;
@@ -18826,7 +18826,7 @@ Elm.VehicleControl.make = function (_elm) {
       var _p13 = A5($Widget.slider,
       "traceAlpha",
       100,
-      0,
+      0.1,
       false,
       $Signal.constant(true));
       var sliderSg = _p13._0;
@@ -18968,7 +18968,7 @@ Elm.Main.make = function (_elm) {
       var digitClock_ = A2($Graphics$Collage.move,
       {ctor: "_Tuple2"
       ,_0: $Basics.toFloat(w) / 2 - 100
-      ,_1: $Basics.toFloat(h) / 2 - 30},
+      ,_1: $Basics.toFloat(h) / 2 - 50},
       $Graphics$Collage.toForm(videoOptions.digitClock));
       var info = A2($Graphics$Collage.move,
       {ctor: "_Tuple2",_0: $Basics.toFloat(w) / 2 - 100,_1: 0},
@@ -18977,7 +18977,7 @@ Elm.Main.make = function (_elm) {
       800,
       A2($Graphics$Element.midTopAt,
       $Graphics$Element.absolute(80),
-      $Graphics$Element.absolute(0)),
+      $Graphics$Element.absolute(40)),
       A3($List.foldr,
       $Graphics$Element.above,
       $Graphics$Element.empty,
