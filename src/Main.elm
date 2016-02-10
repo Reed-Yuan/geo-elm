@@ -11,10 +11,12 @@ import Time exposing (..)
 import Set exposing (..)
 import Text
 import Graphics.Input
+import Signal.Extra exposing (..)
+import Drag exposing (..)
 
 import Data exposing (..)
 import MapControl exposing (..)
-import VideoControl
+import VideoControl exposing (..)
 import VehicleControl exposing (..)
 import Widget
 
@@ -31,12 +33,28 @@ global_icons = [FontAwesome.truck, FontAwesome.ambulance, FontAwesome.taxi, Font
 shadowFlow : Signal.Mailbox Bool
 shadowFlow = Signal.mailbox False
 
+mapMoveEvt =
+    let
+        mergedShadow = Signal.mergeMany [VehicleControl.shadowSg, VideoControl.shadowSg]
+        check (s, m) = 
+            if s then False
+            else
+                case m of
+                    MoveFromTo _ _ -> True
+                    _ -> False
+                    
+        filteredMouseEvt = Signal.Extra.zip mergedShadow Drag.mouseEvents |> Signal.filter check (False, StartAt (0,0)) |> Signal.map snd
+    in 
+        filteredMouseEvt
+
+mapNetSg = mapSg mouseWheelIn screenSizeIn mapMoveEvt
+
 dataSg : Signal (List VehiclTrace)
 dataSg = Signal.map4 (\gps mapp startTime timeDelta -> List.map3 (\x y z -> Data.parseGps x y z mapp startTime timeDelta) gps global_colors global_icons) 
-            vehicleIn (mapSg mouseWheelIn screenSizeIn shadowFlow.signal) VideoControl.startTimeSg VideoControl.timeDeltaSg
+            vehicleIn mapNetSg VideoControl.startTimeSg VideoControl.timeDeltaSg
 
-render : TileMap.Map -> (Time, Element, Form, Element) -> List Data.VehiclTrace -> VehicleOptions -> Element
-render  mapp (t, progressBar, anologClock, digitClock) data vehicleOptions = 
+render : TileMap.Map -> VideoOptions -> List Data.VehiclTrace -> VehicleOptions -> Element
+render  mapp videoOptions data vehicleOptions = 
     let
         w = mapp.size |> fst
         h = mapp.size |> snd
@@ -45,20 +63,26 @@ render  mapp (t, progressBar, anologClock, digitClock) data vehicleOptions =
         (mapAlpha, malpha) = vehicleOptions.mapAlpha
         (tailLength, tl) = vehicleOptions.tailLength
         vehicleList = vehicleOptions.selectedVehicles
-        
+
         baseMap = TileMap.loadMap mapp
         filteredTraces = List.filter (\(id_, _, _, _, _, _) -> Set.member id_ vehicleList) data
-        anologClock_ = anologClock |> move ((toFloat w)/2 - 280, (toFloat h)/2 - 70)
-        digitClock_ = digitClock |> toForm |> move ((toFloat w)/2 - 100, (toFloat h)/2 - 50)
-        progressBar_ = progressBar |> toForm |> move (0, 120 - (toFloat h)/2)
-        traceWithInfo = List.map (\vtrace -> showTrace vtrace t tl mapp) filteredTraces |> List.unzip
+        anologClock_ = videoOptions.anologClock |> move ((toFloat w)/2 - 280, (toFloat h)/2 - 70)
+        digitClock_ = videoOptions.digitClock |> toForm |> move ((toFloat w)/2 - 100, (toFloat h)/2 - 30)
+        progressBar_ = videoOptions.progressBar |> toForm |> move (0, 40 - (toFloat h)/2)
+        traceWithInfo = List.map (\vtrace -> showTrace vtrace videoOptions.time tl mapp) filteredTraces |> List.unzip
         vehicleTrace = fst traceWithInfo |> group
         info = (snd traceWithInfo) |> (List.foldr above Graphics.Element.empty) |> container 160 800 (midTopAt (absolute 80) (absolute 0))
                 |> toForm |> move ((toFloat w)/2 - 100, 0)
         fullTrace = List.map (\(_, _, _, _, vtrace, _) -> vtrace) filteredTraces |> group |> alpha talpha
-        bck = spacer 160 500 |> color white |> opacity 0.85
+        bck = spacer 160 580 |> color white |> opacity 0.85
         checkBoxes_ = checkBoxes vehicleList
-        vehicleStateView = layers [bck, mapAlpha `below` (spacer 1 30) `below` tailLength `below` (spacer 1 30) `below` traceAlpha `below` (spacer 1 30) `below` checkBoxes_]
+        vehicleStateView = layers [bck, 
+                            mapAlpha `below` (spacer 1 20) 
+                            `below` tailLength `below` (spacer 1 20) 
+                            `below` traceAlpha `below` (spacer 1 20)
+                            `below` (fst videoOptions.timeDeltaCtl) `below` (spacer 1 20)
+                            `below` (fst videoOptions.startTimeCtl) `below` (spacer 1 30)
+                            `below` checkBoxes_]
         vehicleStateView_ = vehicleStateView |> toForm |> move (100 - (toFloat w)/2, (toFloat h)/2 - 380)
         gitLink =
                 let
@@ -72,5 +96,5 @@ render  mapp (t, progressBar, anologClock, digitClock) data vehicleOptions =
         collage w h [toForm baseMap |> alpha malpha, fullTrace, vehicleTrace, info, title, anologClock_, digitClock_, progressBar_, vehicleStateView_, gitLink]
 
 main : Signal Element
-main = Signal.map4 render (mapSg mouseWheelIn screenSizeIn shadowFlow.signal) (VideoControl.videoSg shadowFlow) dataSg (vehicleOptionsSg shadowFlow)
+main = Signal.map4 render mapNetSg VideoControl.videoOptionSg dataSg vehicleOptionsSg
         

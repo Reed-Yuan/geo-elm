@@ -13,8 +13,8 @@ import FontAwesome
 import Html exposing (..)
 import Html.Events exposing (..)
 
-slider : String -> Int -> Float -> Bool ->Signal (Element, Float)
-slider name width initValue isVertical = 
+slider : String -> Int -> Float -> Bool -> Signal Bool ->(Signal (Element, Float), Signal Bool)
+slider name width initValue isVertical enabledSg = 
     let
         knotHeight = 20
         knotWidth = 10
@@ -26,28 +26,26 @@ slider name width initValue isVertical =
         rPos = width - knotWidthHalf
         initPosition = ((initValue * (toFloat (width - knotWidth))) |> round) + knotWidthHalf
         
-        check (s, m) = 
-            if not s then False
+        check (s, m, e) = 
+            if not (s && e) then False
             else
                 case m of
                     MoveFromTo _ _ -> True
                     _ -> False
                     
-        filteredMouseEvt = Signal.Extra.zip hoverFlow.signal Drag.mouseEvents |> Signal.filter check (False, StartAt (0,0)) |> Signal.map snd
+        filteredMouseEvt = Signal.Extra.zip3 hoverFlow.signal Drag.mouseEvents enabledSg 
+                            |> Signal.filter check (False, StartAt (0,0), False) |> Signal.map (\(_, x, _) -> x)
         
         sliderOps : Signal Int
         sliderOps = 
             let
                 merge msEvt =
-                    let
-                        d = 3 --Debug.log "msEvt" msEvt
-                    in
-                        case msEvt of
-                            MoveFromTo (x0,y0) (x1, y1) ->
-                                if isVertical
-                                then (y0 - y1)
-                                else (x1 - x0)
-                            _ -> 0
+                    case msEvt of
+                        MoveFromTo (x0,y0) (x1, y1) ->
+                            if isVertical
+                            then (y0 - y1)
+                            else (x1 - x0)
+                        _ -> 0
             in
                 Signal.map merge filteredMouseEvt
         
@@ -71,11 +69,12 @@ slider name width initValue isVertical =
         hoverFlow: Signal.Mailbox Bool
         hoverFlow = Signal.mailbox False
 
-        render x = 
+        render x enabled = 
             let
+                colorr = if enabled then Color.red else Color.darkGrey
                 knot = (if isVertical 
                         then (Graphics.Element.spacer 20 10) 
-                        else (Graphics.Element.spacer 10 20)) |> Graphics.Element.color Color.red 
+                        else (Graphics.Element.spacer 10 20)) |> Graphics.Element.color colorr 
                      |> if isVertical 
                         then (container 20 width  (middleAt (absolute knotHeightHalf) (absolute (width - x)))) 
                         else (container width 20 (middleAt (absolute x) (absolute knotHeightHalf)))
@@ -84,4 +83,4 @@ slider name width initValue isVertical =
             in
                 (knotAndBar, pct)
     in
-        Signal.map render posSignal
+        (Signal.map2 render posSignal enabledSg, hoverFlow.signal)

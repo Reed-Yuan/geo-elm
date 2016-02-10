@@ -18103,24 +18103,21 @@ Elm.MapControl.make = function (_elm) {
    var Size = function (a) {    return {ctor: "Size",_0: a};};
    var Pan = function (a) {    return {ctor: "Pan",_0: a};};
    var Zoom = function (a) {    return {ctor: "Zoom",_0: a};};
-   var ops = F3(function (mouseWheelIn,screenSizeIn,shadowFlow) {
-      var mouseDrag = F2(function (evt,inShadow) {
-         if (inShadow) return NoOp; else {
-               var _p1 = evt;
-               if (_p1.ctor === "MoveFromTo" && _p1._0.ctor === "_Tuple2" && _p1._1.ctor === "_Tuple2")
-               {
-                     return Pan({ctor: "_Tuple2"
-                                ,_0: _p1._1._0 - _p1._0._0
-                                ,_1: _p1._1._1 - _p1._0._1});
-                  } else {
-                     return NoOp;
-                  }
+   var ops = F3(function (mouseWheelIn,
+   screenSizeIn,
+   filteredMouseEvt) {
+      var mouseDrag = function (evt) {
+         var _p1 = evt;
+         if (_p1.ctor === "MoveFromTo" && _p1._0.ctor === "_Tuple2" && _p1._1.ctor === "_Tuple2")
+         {
+               return Pan({ctor: "_Tuple2"
+                          ,_0: _p1._1._0 - _p1._0._0
+                          ,_1: _p1._1._1 - _p1._0._1});
+            } else {
+               return NoOp;
             }
-      });
-      var pan = A3($Signal.map2,
-      mouseDrag,
-      $Drag.mouseEvents,
-      shadowFlow);
+      };
+      var pan = A2($Signal.map,mouseDrag,filteredMouseEvt);
       var sizing = A2($Signal$Extra._op["<~"],
       function (_p2) {
          var _p3 = _p2;
@@ -18137,7 +18134,9 @@ Elm.MapControl.make = function (_elm) {
       mouseWheelIn);
       return $Signal.mergeMany(_U.list([zooms,sizing,pan]));
    });
-   var mapSg = F3(function (mouseWheelIn,screenSizeIn,shadowFlow) {
+   var mapSg = F3(function (mouseWheelIn,
+   screenSizeIn,
+   filteredMouseEvt) {
       var initMap = {size: {ctor: "_Tuple2"
                            ,_0: $TileMap.tileSize
                            ,_1: $TileMap.tileSize}
@@ -18146,7 +18145,7 @@ Elm.MapControl.make = function (_elm) {
       return A3($Signal.foldp,
       trans,
       initMap,
-      A3(ops,mouseWheelIn,screenSizeIn,shadowFlow));
+      A3(ops,mouseWheelIn,screenSizeIn,filteredMouseEvt));
    });
    var MouseWheel = F2(function (a,b) {
       return {pos: a,delta: b};
@@ -18181,11 +18180,15 @@ Elm.Widget.make = function (_elm) {
    $Signal = Elm.Signal.make(_elm),
    $Signal$Extra = Elm.Signal.Extra.make(_elm);
    var _op = {};
-   var slider = F4(function (name,width,initValue,isVertical) {
+   var slider = F5(function (name,
+   width,
+   initValue,
+   isVertical,
+   enabledSg) {
       var hoverFlow = $Signal.mailbox(false);
       var check = function (_p0) {
          var _p1 = _p0;
-         if ($Basics.not(_p1._0)) return false; else {
+         if ($Basics.not(_p1._0 && _p1._2)) return false; else {
                var _p2 = _p1._1;
                if (_p2.ctor === "MoveFromTo") {
                      return true;
@@ -18195,20 +18198,26 @@ Elm.Widget.make = function (_elm) {
             }
       };
       var filteredMouseEvt = A2($Signal.map,
-      $Basics.snd,
+      function (_p3) {
+         var _p4 = _p3;
+         return _p4._1;
+      },
       A3($Signal.filter,
       check,
-      {ctor: "_Tuple2"
+      {ctor: "_Tuple3"
       ,_0: false
-      ,_1: $Drag.StartAt({ctor: "_Tuple2",_0: 0,_1: 0})},
-      A2($Signal$Extra.zip,hoverFlow.signal,$Drag.mouseEvents)));
+      ,_1: $Drag.StartAt({ctor: "_Tuple2",_0: 0,_1: 0})
+      ,_2: false},
+      A3($Signal$Extra.zip3,
+      hoverFlow.signal,
+      $Drag.mouseEvents,
+      enabledSg)));
       var sliderOps = function () {
          var merge = function (msEvt) {
-            var d = 3;
-            var _p3 = msEvt;
-            if (_p3.ctor === "MoveFromTo" && _p3._0.ctor === "_Tuple2" && _p3._1.ctor === "_Tuple2")
+            var _p5 = msEvt;
+            if (_p5.ctor === "MoveFromTo" && _p5._0.ctor === "_Tuple2" && _p5._1.ctor === "_Tuple2")
             {
-                  return isVertical ? _p3._0._1 - _p3._1._1 : _p3._1._0 - _p3._0._0;
+                  return isVertical ? _p5._0._1 - _p5._1._1 : _p5._1._0 - _p5._0._0;
                } else {
                   return 0;
                }
@@ -18250,8 +18259,9 @@ Elm.Widget.make = function (_elm) {
       var slideRect = isVertical ? A2($Graphics$Element.spacer,
       knotHeight,
       width) : A2($Graphics$Element.spacer,width,knotHeight);
-      var render = function (x) {
+      var render = F2(function (x,enabled) {
          var pct = $Basics.toFloat(x - knotWidthHalf) / $Basics.toFloat(width - knotWidth);
+         var colorr = enabled ? $Color.red : $Color.darkGrey;
          var knot = (isVertical ? A3($Graphics$Element.container,
          20,
          width,
@@ -18263,7 +18273,7 @@ Elm.Widget.make = function (_elm) {
          A2($Graphics$Element.middleAt,
          $Graphics$Element.absolute(x),
          $Graphics$Element.absolute(knotHeightHalf))))(A2($Graphics$Element.color,
-         $Color.red,
+         colorr,
          isVertical ? A2($Graphics$Element.spacer,
          20,
          10) : A2($Graphics$Element.spacer,10,20)));
@@ -18271,8 +18281,10 @@ Elm.Widget.make = function (_elm) {
          $Signal.message(hoverFlow.address),
          $Graphics$Element.layers(_U.list([bar,knot,slideRect])));
          return {ctor: "_Tuple2",_0: knotAndBar,_1: pct};
-      };
-      return A2($Signal.map,render,posSignal);
+      });
+      return {ctor: "_Tuple2"
+             ,_0: A3($Signal.map2,render,posSignal,enabledSg)
+             ,_1: hoverFlow.signal};
    });
    return _elm.Widget.values = {_op: _op,slider: slider};
 };
@@ -18297,398 +18309,304 @@ Elm.VideoControl.make = function (_elm) {
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm),
    $Signal$Extra = Elm.Signal.Extra.make(_elm),
+   $Text = Elm.Text.make(_elm),
    $Time = Elm.Time.make(_elm),
    $Utils = Elm.Utils.make(_elm),
    $Widget = Elm.Widget.make(_elm);
    var _op = {};
-   var clickFlow = $Signal.mailbox("");
-   var clockk = function (t) {
-      var dTxt = A3($Html.toElement,
-      160,
-      60,
-      A2($Html.span,
-      _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
-                                               ,_0: "padding"
-                                               ,_1: "4px 22px 4px 22px"}
-                                              ,{ctor: "_Tuple2",_0: "color",_1: "blue"}
-                                              ,{ctor: "_Tuple2",_0: "font-size",_1: "xx-large"}
-                                              ,{ctor: "_Tuple2"
-                                               ,_0: "background-color"
-                                               ,_1: "rgba(255, 255, 255, 0.9)"}]))]),
-      _U.list([$Html.text($Utils.timeToString(t))])));
-      var hand_hh = A2($Graphics$Collage.traced,
-      _U.update($Graphics$Collage.defaultLine,
-      {width: 8,color: $Color.green}),
-      A2($Graphics$Collage.segment,
-      {ctor: "_Tuple2",_0: 0,_1: 0},
-      $Basics.fromPolar({ctor: "_Tuple2"
-                        ,_0: 35
-                        ,_1: $Basics.degrees(90 - 6 * $Time.inSeconds(t) / 720)})));
-      var hand_mm = A2($Graphics$Collage.traced,
-      _U.update($Graphics$Collage.defaultLine,
-      {width: 5,color: $Color.blue}),
-      A2($Graphics$Collage.segment,
-      {ctor: "_Tuple2",_0: 0,_1: 0},
-      $Basics.fromPolar({ctor: "_Tuple2"
-                        ,_0: 50
-                        ,_1: $Basics.degrees(90 - 6 * $Time.inSeconds(t) / 60)})));
-      var outline_ = A2($Graphics$Collage.outlined,
-      _U.update($Graphics$Collage.defaultLine,
-      {width: 4,color: $Color.orange}),
-      $Graphics$Collage.circle(60));
-      var face = A2($Graphics$Collage.alpha,
-      0.6,
-      A2($Graphics$Collage.filled,
-      $Color.lightGrey,
-      $Graphics$Collage.circle(60)));
-      var clk = A2($Graphics$Collage.moveX,
-      -20,
-      $Graphics$Collage.group(_U.list([face
-                                      ,outline_
-                                      ,hand_mm
-                                      ,hand_hh])));
-      return {ctor: "_Tuple2",_0: clk,_1: dTxt};
-   };
-   var PauseVideo = {ctor: "PauseVideo"};
-   var StopVideo = {ctor: "StopVideo"};
-   var PlayVideo = {ctor: "PlayVideo"};
-   var videoOps = $Signal.mailbox(PlayVideo);
-   var clickSlider = F4(function (name,
-   width,
-   initValue,
-   isVertical) {
-      var editIcon = A2($Graphics$Input.clickable,
-      A2($Signal.message,clickFlow.address,name),
-      A3($Html.toElement,
-      24,
-      24,
-      A2($FontAwesome.pencil,$Color.darkGreen,24)));
-      var dock = F2(function (isEditing,_p0) {
-         var _p1 = _p0;
-         var _p2 = _p1._1;
-         var sliderBar = $Graphics$Element.layers(_U.list([A2($Graphics$Element.opacity,
-                                                          0.85,
-                                                          A2($Graphics$Element.color,
-                                                          $Color.white,
-                                                          A2($Graphics$Element.spacer,40,120)))
-                                                          ,A2($Graphics$Element.below,
-                                                          A2($Graphics$Element.beside,
-                                                          A2($Graphics$Element.spacer,10,1),
-                                                          _p1._0),
-                                                          A2($Graphics$Element.spacer,1,10))]));
-         return isEditing ? {ctor: "_Tuple3"
-                            ,_0: editIcon
-                            ,_1: sliderBar
-                            ,_2: _p2} : {ctor: "_Tuple3"
-                                        ,_0: editIcon
-                                        ,_1: A2($Graphics$Element.spacer,40,0)
-                                        ,_2: _p2};
-      });
-      var editStateSg_ = A3($Signal.foldp,
-      F2(function (f,state) {
-         return f ? $Basics.not(state) : state;
-      }),
-      false,
-      A2($Signal$Extra._op["<~"],
-      function (s) {
-         return _U.eq(s,name);
-      },
-      clickFlow.signal));
-      var editStateSg = A3($Signal.map2,
-      F2(function (s,x) {    return _U.eq(x,PlayVideo) ? false : s;}),
-      editStateSg_,
-      videoOps.signal);
-      return A3($Signal.map2,
-      dock,
-      editStateSg,
-      A4($Widget.slider,name,width,initValue,isVertical));
-   });
-   var timeSpanCtlSg = function () {
-      var f = function (_p3) {
-         var _p4 = _p3;
-         var t = A2(F2(function (x,y) {    return x + y;}),
-         1,
-         $Basics.round(_p4._2 * 23));
-         var timeNode = A3($Html.toElement,
-         100,
-         30,
-         A2($Html.span,
-         _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
-                                                  ,_0: "font-size"
-                                                  ,_1: "large"}
-                                                 ,{ctor: "_Tuple2",_0: "font-weight",_1: "bold"}
-                                                 ,{ctor: "_Tuple2",_0: "color",_1: "blue"}]))]),
-         _U.list([$Html.text(A2($Basics._op["++"],
-         "[ ",
-         A2($Basics._op["++"],
-         $Basics.toString(t),
-         A2($Basics._op["++"],
-         _U.eq(t,1) ? " hour" : " hours",
-         " ]"))))])));
-         return {ctor: "_Tuple4"
-                ,_0: timeNode
-                ,_1: _p4._0
-                ,_2: _p4._1
-                ,_3: t};
-      };
-      return A2($Signal.map,f,A4(clickSlider,"timeDelta",100,1,true));
-   }();
-   var timeDeltaSg = A2($Signal.map,
-   function (_p5) {
-      var _p6 = _p5;
-      return _p6._3;
-   },
-   timeSpanCtlSg);
-   var Tick = function (a) {    return {ctor: "Tick",_0: a};};
-   var ops = function () {
-      var clock_ = A2($Signal$Extra._op["<~"],Tick,$Time.fps(25));
-      return $Signal.mergeMany(_U.list([clock_,videoOps.signal]));
-   }();
-   var State = F2(function (a,b) {
-      return {clock: a,videoStatus: b};
+   var VideoOptions = F6(function (a,b,c,d,e,f) {
+      return {time: a
+             ,progressBar: b
+             ,anologClock: c
+             ,digitClock: d
+             ,startTimeCtl: e
+             ,timeDeltaCtl: f};
    });
    var Stop = {ctor: "Stop"};
-   var Pause = {ctor: "Pause"};
-   var Playing = {ctor: "Playing"};
-   var trans = F2(function (op,state) {
-      var _p7 = op;
-      switch (_p7.ctor)
-      {case "Tick": var isVideoDone = false;
-           return _U.eq(state.videoStatus,
-           Playing) && $Basics.not(isVideoDone) ? _U.update(state,
-           {clock: state.clock + _p7._0}) : isVideoDone ? _U.update(state,
-           {videoStatus: Stop,clock: 0}) : state;
-         case "PlayVideo": return _U.update(state,
-           {videoStatus: Playing});
-         case "StopVideo": return _U.update(state,
-           {videoStatus: Stop,clock: 0});
-         default: return _U.update(state,{videoStatus: Pause});}
-   });
-   var videoStateSg = A3($Signal.foldp,
-   trans,
-   A2(State,0,Playing),
-   ops);
-   var global_t1 = $Utils.timeFromString("2016-01-12T00:00:00");
-   var global_t0 = $Utils.timeFromString("2016-01-11T00:00:00");
-   var videoControl = F5(function (t,
-   videoStatus,
-   _p9,
-   _p8,
-   shadowFlow) {
-      var _p10 = _p9;
-      var _p11 = _p8;
-      var sliderB_ = !_U.eq(videoStatus,
-      Stop) ? $Graphics$Element.empty : A2($Graphics$Input.hoverable,
-      $Signal.message(shadowFlow.address),
-      _p11._2);
-      var sliderA_ = !_U.eq(videoStatus,
-      Stop) ? $Graphics$Element.empty : A2($Graphics$Input.hoverable,
-      $Signal.message(shadowFlow.address),
-      _p10._2);
-      var editIcon_2 = !_U.eq(videoStatus,
-      Stop) ? A2($Graphics$Element.spacer,24,1) : _p11._1;
-      var editIcon_1 = !_U.eq(videoStatus,
-      Stop) ? A2($Graphics$Element.spacer,24,1) : _p10._1;
-      var p = (t - global_t0) / (global_t1 - global_t0) * 400;
-      var progress = A2($Graphics$Collage.moveX,
-      -210,
-      A2($Graphics$Collage.traced,
-      _U.update($Graphics$Collage.defaultLine,
-      {width: 10,color: $Color.red}),
-      A2($Graphics$Collage.segment,
-      {ctor: "_Tuple2",_0: 0,_1: 0},
-      {ctor: "_Tuple2",_0: p,_1: 0})));
-      var darkBar = A2($Graphics$Collage.moveX,
-      -210,
-      A2($Graphics$Collage.traced,
-      _U.update($Graphics$Collage.defaultLine,
-      {width: 10,color: $Color.darkGrey}),
-      A2($Graphics$Collage.segment,
-      {ctor: "_Tuple2",_0: 0,_1: 0},
-      {ctor: "_Tuple2",_0: 400,_1: 0})));
-      var progressBar = A2($Graphics$Element.below,
-      A3($Graphics$Collage.collage,
-      440,
-      10,
-      _U.list([darkBar,progress])),
-      A2($Graphics$Element.spacer,1,5));
-      var icon_pause = A2($Graphics$Input.clickable,
-      A2($Signal.message,videoOps.address,PauseVideo),
-      A3($Html.toElement,
-      40,
-      20,
-      A2($FontAwesome.pause,$Color.darkGreen,20)));
-      var icon_play = A2($Graphics$Input.clickable,
-      A2($Signal.message,videoOps.address,PlayVideo),
-      A3($Html.toElement,
-      40,
-      20,
-      A2($FontAwesome.play,$Color.darkGreen,20)));
-      var icon_stop = A2($Graphics$Input.clickable,
-      A2($Signal.message,videoOps.address,StopVideo),
-      A3($Html.toElement,
-      40,
-      20,
-      A2($FontAwesome.stop,$Color.darkGreen,20)));
-      var isPlaying = _U.eq(videoStatus,Playing);
-      var icon_ = A2($Graphics$Element.beside,
-      isPlaying ? icon_pause : icon_play,
-      _U.eq(videoStatus,Stop) ? A2($Graphics$Element.spacer,
-      40,
-      20) : icon_stop);
-      var wth = 820;
-      var sliders = A4($Graphics$Element.container,
-      wth,
-      160,
-      A2($Graphics$Element.bottomLeftAt,
-      $Graphics$Element.absolute(0),
-      $Graphics$Element.absolute(0)),
-      A2($Graphics$Element.beside,
-      A2($Graphics$Element.beside,
-      A2($Graphics$Element.beside,
-      A2($Graphics$Element.spacer,110,1),
-      sliderA_),
-      A2($Graphics$Element.spacer,530,1)),
-      sliderB_));
-      var ht = 40;
-      var ctls = A2($Graphics$Input.hoverable,
-      $Signal.message(shadowFlow.address),
-      A4($Graphics$Element.container,
-      wth,
-      40,
-      A2($Graphics$Element.bottomLeftAt,
-      $Graphics$Element.absolute(0),
-      $Graphics$Element.absolute(0)),
-      $Graphics$Element.layers(_U.list([A2($Graphics$Element.opacity,
-                                       0.85,
-                                       A2($Graphics$Element.color,
-                                       $Color.white,
-                                       A2($Graphics$Element.spacer,wth,ht)))
-                                       ,A2($Graphics$Element.below,
-                                       A2($Graphics$Element.beside,
-                                       A2($Graphics$Element.beside,
-                                       A2($Graphics$Element.beside,
-                                       A2($Graphics$Element.beside,
-                                       A2($Graphics$Element.beside,
-                                       A2($Graphics$Element.beside,
-                                       A2($Graphics$Element.beside,
-                                       A2($Graphics$Element.beside,
-                                       A2($Graphics$Element.spacer,20,1),
-                                       _p10._0),
-                                       editIcon_1),
-                                       A2($Graphics$Element.spacer,10,1)),
-                                       progressBar),
-                                       _p11._0),
-                                       editIcon_2),
-                                       A2($Graphics$Element.spacer,20,1)),
-                                       icon_),
-                                       A2($Graphics$Element.spacer,1,10))]))));
-      return A2($Graphics$Element.above,
-      A2($Graphics$Element.above,
-      sliders,
-      A2($Graphics$Element.spacer,wth,10)),
-      ctls);
-   });
-   var startTimeCtlSg = function () {
-      var f = function (_p12) {
-         var _p13 = _p12;
+   var videoOps = $Signal.mailbox(Stop);
+   var timeSpanCtlSg = function () {
+      var f = function (_p0) {
+         var _p1 = _p0;
          var t = A2(F2(function (x,y) {    return x + y;}),
-         global_t0,
-         $Basics.toFloat($Basics.round(_p13._2 * 23) * 3600000));
-         var timeNode = A3($Html.toElement,
-         100,
+         1,
+         $Basics.round(_p1._1 * 23));
+         var title = A3($Html.toElement,
+         160,
          30,
          A2($Html.span,
          _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
-                                                  ,_0: "font-size"
-                                                  ,_1: "large"}
+                                                  ,_0: "padding-left"
+                                                  ,_1: "10px"}
                                                  ,{ctor: "_Tuple2",_0: "font-weight",_1: "bold"}
-                                                 ,{ctor: "_Tuple2",_0: "color",_1: "blue"}]))]),
-         _U.list([$Html.text($Utils.timeToString(t))])));
-         return {ctor: "_Tuple4"
-                ,_0: timeNode
-                ,_1: _p13._0
-                ,_2: _p13._1
-                ,_3: t};
+                                                 ,{ctor: "_Tuple2",_0: "font-size",_1: "large"}]))]),
+         _U.list([$Html.text(A2($Basics._op["++"],
+         "Span: ",
+         A2($Basics._op["++"],
+         $Basics.toString(t),
+         _U.eq(t,1) ? " hour" : " hours")))])));
+         var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
+         A2($Graphics$Element.beside,
+         A2($Graphics$Element.spacer,20,1),
+         _p1._0),
+         title)]));
+         return {ctor: "_Tuple2",_0: wrappedSlider,_1: t};
       };
-      return A2($Signal.map,f,A4(clickSlider,"startTime",100,0,true));
+      var _p2 = A5($Widget.slider,
+      "timeDelta",
+      100,
+      1,
+      false,
+      A2($Signal.map,
+      F2(function (x,y) {    return _U.eq(x,y);})(Stop),
+      videoOps.signal));
+      var sliderSg = _p2._0;
+      var shadowFlow = _p2._1;
+      return {ctor: "_Tuple2"
+             ,_0: A2($Signal.map,f,sliderSg)
+             ,_1: shadowFlow};
+   }();
+   var timeDeltaSg = A2($Signal.map,
+   function (_p3) {
+      var _p4 = _p3;
+      return _p4._1;
+   },
+   $Basics.fst(timeSpanCtlSg));
+   var Pause = {ctor: "Pause"};
+   var Play = {ctor: "Play"};
+   var global_t1 = $Utils.timeFromString("2016-01-12T00:00:00");
+   var global_t0 = $Utils.timeFromString("2016-01-11T00:00:00");
+   var startTimeCtlSg = function () {
+      var f = function (_p5) {
+         var _p6 = _p5;
+         var t = A2(F2(function (x,y) {    return x + y;}),
+         global_t0,
+         $Basics.toFloat($Basics.round(_p6._1 * 23) * 3600000));
+         var title = A3($Html.toElement,
+         160,
+         30,
+         A2($Html.span,
+         _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
+                                                  ,_0: "padding-left"
+                                                  ,_1: "10px"}
+                                                 ,{ctor: "_Tuple2",_0: "font-weight",_1: "bold"}
+                                                 ,{ctor: "_Tuple2",_0: "font-size",_1: "large"}]))]),
+         _U.list([$Html.text(A2($Basics._op["++"],
+         "From: ",
+         $Utils.timeToString(t)))])));
+         var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
+         A2($Graphics$Element.beside,
+         A2($Graphics$Element.spacer,20,1),
+         _p6._0),
+         title)]));
+         return {ctor: "_Tuple2",_0: wrappedSlider,_1: t};
+      };
+      var _p7 = A5($Widget.slider,
+      "startTime",
+      100,
+      0,
+      false,
+      A2($Signal.map,
+      F2(function (x,y) {    return _U.eq(x,y);})(Stop),
+      videoOps.signal));
+      var sliderSg = _p7._0;
+      var shadowFlow = _p7._1;
+      return {ctor: "_Tuple2"
+             ,_0: A2($Signal.map,f,sliderSg)
+             ,_1: shadowFlow};
    }();
    var startTimeSg = A2($Signal.map,
-   function (_p14) {
-      var _p15 = _p14;
-      return _p15._3;
+   function (_p8) {
+      var _p9 = _p8;
+      return _p9._1;
    },
-   startTimeCtlSg);
+   $Basics.fst(startTimeCtlSg));
+   var shadowSg = $Signal.mergeMany(_U.list([$Basics.snd(startTimeCtlSg)
+                                            ,$Basics.snd(timeSpanCtlSg)]));
    var animationSg = function () {
       var anim = F2(function (startTime,timeDelta) {
-         return A2($Animation.duration,
-         240 * $Time.second,
+         return A2($Animation.speed,
+         400,
          A2($Animation.to,
          startTime + $Basics.toFloat(timeDelta) * 3600000,
          A2($Animation.from,startTime,$Animation.animation(0))));
       });
       return A3($Signal.map2,anim,startTimeSg,timeDeltaSg);
    }();
-   var videoSg = function (shadowFlow) {
-      var aug = F4(function (state,_p17,_p16,anime) {
-         var _p18 = _p17;
-         var _p19 = _p16;
-         var t = A2($Animation.animate,state.clock,anime);
-         var progressBar = A5(videoControl,
-         t,
-         state.videoStatus,
-         {ctor: "_Tuple4"
-         ,_0: _p18._0
-         ,_1: _p18._1
-         ,_2: _p18._2
-         ,_3: _p18._3},
-         {ctor: "_Tuple4"
-         ,_0: _p19._0
-         ,_1: _p19._1
-         ,_2: _p19._2
-         ,_3: _p19._3},
-         shadowFlow);
-         var _p20 = clockk(t);
-         var anologClock = _p20._0;
-         var digitClock = _p20._1;
-         return {ctor: "_Tuple4"
-                ,_0: t
-                ,_1: progressBar
-                ,_2: anologClock
-                ,_3: digitClock};
+   var clock = function () {
+      var virtualClock = F2(function (t,anime) {
+         return A2($Animation.animate,t,anime);
+      });
+      var tick = F2(function (_p10,state) {
+         var _p11 = _p10;
+         var _p12 = _p11._1;
+         return _U.eq(_p12,Play) ? state + _p11._0 : _U.eq(_p12,
+         Stop) ? 0 : state;
+      });
+      var realClock = A3($Signal.foldp,
+      tick,
+      global_t0,
+      A2($Signal$Extra.zip,$Time.fps(25),videoOps.signal));
+      return A3($Signal.map2,virtualClock,realClock,animationSg);
+   }();
+   var videoControlSg = function () {
+      var drawProgress = F3(function (t,t0,td) {
+         var p = (t - t0) / ($Basics.toFloat(td) * 3600000) * 400;
+         var progress = A2($Graphics$Collage.moveX,
+         -210,
+         A2($Graphics$Collage.traced,
+         _U.update($Graphics$Collage.defaultLine,
+         {width: 10,color: $Color.red}),
+         A2($Graphics$Collage.segment,
+         {ctor: "_Tuple2",_0: 0,_1: 0},
+         {ctor: "_Tuple2",_0: p,_1: 0})));
+         var darkBar = A2($Graphics$Collage.moveX,
+         -210,
+         A2($Graphics$Collage.traced,
+         _U.update($Graphics$Collage.defaultLine,
+         {width: 10,color: $Color.darkGrey}),
+         A2($Graphics$Collage.segment,
+         {ctor: "_Tuple2",_0: 0,_1: 0},
+         {ctor: "_Tuple2",_0: 400,_1: 0})));
+         return A3($Graphics$Collage.collage,
+         440,
+         10,
+         _U.list([darkBar,progress]));
+      });
+      var drawControls = function (videoStatus) {
+         var icon_pause = A2($Graphics$Input.clickable,
+         A2($Signal.message,videoOps.address,Pause),
+         A3($Html.toElement,
+         40,
+         20,
+         A2($FontAwesome.pause,$Color.darkGreen,20)));
+         var icon_play = A2($Graphics$Input.clickable,
+         A2($Signal.message,videoOps.address,Play),
+         A3($Html.toElement,
+         40,
+         20,
+         A2($FontAwesome.play,$Color.darkGreen,20)));
+         var icon_stop = A2($Graphics$Input.clickable,
+         A2($Signal.message,videoOps.address,Stop),
+         A3($Html.toElement,
+         40,
+         20,
+         A2($FontAwesome.stop,$Color.darkGreen,20)));
+         return A2($Graphics$Element.below,
+         A2($Graphics$Element.beside,
+         _U.eq(videoStatus,Play) ? icon_pause : icon_play,
+         _U.eq(videoStatus,Stop) ? A2($Graphics$Element.spacer,
+         40,
+         20) : icon_stop),
+         A2($Graphics$Element.spacer,1,5));
+      };
+      var wth = 580;
+      var drawCtlAndPrgs = F4(function (videoStatus,t,t0,td) {
+         return $Graphics$Element.layers(_U.list([A2($Graphics$Element.opacity,
+                                                 0.85,
+                                                 A2($Graphics$Element.color,
+                                                 $Color.white,
+                                                 A2($Graphics$Element.spacer,wth,30)))
+                                                 ,A2($Graphics$Element.beside,
+                                                 A2($Graphics$Element.beside,
+                                                 A2($Graphics$Element.beside,
+                                                 A2($Graphics$Element.spacer,40,10),
+                                                 drawControls(videoStatus)),
+                                                 A2($Graphics$Element.spacer,10,10)),
+                                                 A2($Graphics$Element.below,
+                                                 A3(drawProgress,t,t0,td),
+                                                 A2($Graphics$Element.spacer,1,10)))]));
       });
       return A5($Signal.map4,
-      aug,
-      videoStateSg,
-      startTimeCtlSg,
-      timeSpanCtlSg,
-      animationSg);
-   };
+      drawCtlAndPrgs,
+      videoOps.signal,
+      clock,
+      startTimeSg,
+      timeDeltaSg);
+   }();
+   var analogClockSg = function () {
+      var analogClock = function (t) {
+         var hand_hh = A2($Graphics$Collage.traced,
+         _U.update($Graphics$Collage.defaultLine,
+         {width: 8,color: $Color.blue}),
+         A2($Graphics$Collage.segment,
+         {ctor: "_Tuple2",_0: 0,_1: 0},
+         $Basics.fromPolar({ctor: "_Tuple2"
+                           ,_0: 35
+                           ,_1: $Basics.degrees(90 - 6 * $Time.inSeconds(t) / 720)})));
+         var hand_mm = A2($Graphics$Collage.traced,
+         _U.update($Graphics$Collage.defaultLine,
+         {width: 5,color: $Color.green}),
+         A2($Graphics$Collage.segment,
+         {ctor: "_Tuple2",_0: 0,_1: 0},
+         $Basics.fromPolar({ctor: "_Tuple2"
+                           ,_0: 50
+                           ,_1: $Basics.degrees(90 - 6 * $Time.inSeconds(t) / 60)})));
+         var outline_ = A2($Graphics$Collage.outlined,
+         _U.update($Graphics$Collage.defaultLine,
+         {width: 4,color: $Color.orange}),
+         $Graphics$Collage.circle(60));
+         var face = A2($Graphics$Collage.alpha,
+         0.6,
+         A2($Graphics$Collage.filled,
+         $Color.lightGrey,
+         $Graphics$Collage.circle(60)));
+         return $Graphics$Collage.group(_U.list([face
+                                                ,outline_
+                                                ,hand_mm
+                                                ,hand_hh]));
+      };
+      return A2($Signal.map,analogClock,clock);
+   }();
+   var digitalClockSg = function () {
+      var digitalClock = function (t) {
+         var dTxt = $Graphics$Element.leftAligned(A2($Text.color,
+         $Color.green,
+         $Text.bold(A2($Text.height,
+         35,
+         $Text.fromString($Utils.timeToString(t))))));
+         return $Graphics$Element.layers(_U.list([A2($Graphics$Element.opacity,
+                                                 0.85,
+                                                 A2($Graphics$Element.color,
+                                                 $Color.white,
+                                                 A2($Graphics$Element.spacer,160,40)))
+                                                 ,A2($Graphics$Element.beside,
+                                                 A2($Graphics$Element.spacer,15,1),
+                                                 dTxt)]));
+      };
+      return A2($Signal.map,digitalClock,clock);
+   }();
+   var videoOptionSg = function () {
+      var videoSg_ = A6($Signal.map5,
+      VideoOptions,
+      clock,
+      videoControlSg,
+      analogClockSg,
+      digitalClockSg,
+      $Basics.fst(startTimeCtlSg));
+      return A3($Signal.map2,
+      F2(function (x,y) {    return x(y);}),
+      videoSg_,
+      $Basics.fst(timeSpanCtlSg));
+   }();
    return _elm.VideoControl.values = {_op: _op
                                      ,animationSg: animationSg
                                      ,global_t0: global_t0
                                      ,global_t1: global_t1
-                                     ,Playing: Playing
+                                     ,Play: Play
                                      ,Pause: Pause
                                      ,Stop: Stop
-                                     ,State: State
-                                     ,Tick: Tick
-                                     ,PlayVideo: PlayVideo
-                                     ,StopVideo: StopVideo
-                                     ,PauseVideo: PauseVideo
                                      ,videoOps: videoOps
-                                     ,ops: ops
-                                     ,trans: trans
-                                     ,videoStateSg: videoStateSg
-                                     ,videoControl: videoControl
-                                     ,clockk: clockk
-                                     ,videoSg: videoSg
+                                     ,clock: clock
+                                     ,videoControlSg: videoControlSg
+                                     ,analogClockSg: analogClockSg
+                                     ,digitalClockSg: digitalClockSg
                                      ,startTimeCtlSg: startTimeCtlSg
+                                     ,timeSpanCtlSg: timeSpanCtlSg
                                      ,startTimeSg: startTimeSg
                                      ,timeDeltaSg: timeDeltaSg
-                                     ,timeSpanCtlSg: timeSpanCtlSg
-                                     ,clickFlow: clickFlow
-                                     ,clickSlider: clickSlider};
+                                     ,shadowSg: shadowSg
+                                     ,VideoOptions: VideoOptions
+                                     ,videoOptionSg: videoOptionSg};
 };
 Elm.VehicleControl = Elm.VehicleControl || {};
 Elm.VehicleControl.make = function (_elm) {
@@ -18809,7 +18727,7 @@ Elm.VehicleControl.make = function (_elm) {
       A2($Graphics$Element.spacer,20,1),
       cBoxes)));
    };
-   var tailSg = function (shadowFlow) {
+   var tailSg = function () {
       var wrap = function (_p5) {
          var _p6 = _p5;
          var pct_ = $Basics.round(A2($Exts$Float.roundTo,
@@ -18818,7 +18736,7 @@ Elm.VehicleControl.make = function (_elm) {
          var pct__ = pct_ - A2($Basics._op["%"],pct_,5);
          var title = A3($Html.toElement,
          160,
-         40,
+         30,
          A2($Html.span,
          _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
                                                   ,_0: "padding-left"
@@ -18828,26 +18746,32 @@ Elm.VehicleControl.make = function (_elm) {
          _U.list([$Html.text(A2($Basics._op["++"],
          "Tail: ",
          A2($Basics._op["++"],$Basics.toString(pct__)," minutes")))])));
-         var wrappedSlider = A2($Graphics$Input.hoverable,
-         $Signal.message(shadowFlow.address),
-         $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
+         var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
          A2($Graphics$Element.beside,
          A2($Graphics$Element.spacer,20,1),
          _p6._0),
-         title)])));
+         title)]));
          return {ctor: "_Tuple2",_0: wrappedSlider,_1: pct__};
       };
-      return A2($Signal.map,
-      wrap,
-      A4($Widget.slider,"tailLength",100,0.5,false));
-   };
-   var mapAlphaSg = function (shadowFlow) {
-      var wrap = function (_p7) {
-         var _p8 = _p7;
-         var pct_ = A2($Exts$Float.roundTo,2,_p8._1);
+      var _p7 = A5($Widget.slider,
+      "tailLength",
+      100,
+      0.5,
+      false,
+      $Signal.constant(true));
+      var sliderSg = _p7._0;
+      var shadowFlow = _p7._1;
+      return {ctor: "_Tuple2"
+             ,_0: A2($Signal.map,wrap,sliderSg)
+             ,_1: shadowFlow};
+   }();
+   var mapAlphaSg = function () {
+      var wrap = function (_p8) {
+         var _p9 = _p8;
+         var pct_ = A2($Exts$Float.roundTo,2,_p9._1);
          var title = A3($Html.toElement,
          160,
-         40,
+         30,
          A2($Html.span,
          _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
                                                   ,_0: "padding-left"
@@ -18857,26 +18781,32 @@ Elm.VehicleControl.make = function (_elm) {
          _U.list([$Html.text(A2($Basics._op["++"],
          "Map Alpha: ",
          $Basics.toString(pct_)))])));
-         var wrappedSlider = A2($Graphics$Input.hoverable,
-         $Signal.message(shadowFlow.address),
-         $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
+         var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
          A2($Graphics$Element.beside,
          A2($Graphics$Element.spacer,20,1),
-         _p8._0),
-         title)])));
+         _p9._0),
+         title)]));
          return {ctor: "_Tuple2",_0: wrappedSlider,_1: pct_};
       };
-      return A2($Signal.map,
-      wrap,
-      A4($Widget.slider,"mapAlpha",100,0.6,false));
-   };
-   var traceAlphaSg = function (shadowFlow) {
-      var wrap = function (_p9) {
-         var _p10 = _p9;
-         var pct_ = A2($Exts$Float.roundTo,2,_p10._1);
+      var _p10 = A5($Widget.slider,
+      "mapAlpha",
+      100,
+      0.6,
+      false,
+      $Signal.constant(true));
+      var sliderSg = _p10._0;
+      var shadowFlow = _p10._1;
+      return {ctor: "_Tuple2"
+             ,_0: A2($Signal.map,wrap,sliderSg)
+             ,_1: shadowFlow};
+   }();
+   var traceAlphaSg = function () {
+      var wrap = function (_p11) {
+         var _p12 = _p11;
+         var pct_ = A2($Exts$Float.roundTo,2,_p12._1);
          var title = A3($Html.toElement,
          160,
-         40,
+         30,
          A2($Html.span,
          _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
                                                   ,_0: "padding-left"
@@ -18886,33 +18816,40 @@ Elm.VehicleControl.make = function (_elm) {
          _U.list([$Html.text(A2($Basics._op["++"],
          "Trace Alpha: ",
          $Basics.toString(pct_)))])));
-         var wrappedSlider = A2($Graphics$Input.hoverable,
-         $Signal.message(shadowFlow.address),
-         $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
+         var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
          A2($Graphics$Element.beside,
          A2($Graphics$Element.spacer,20,1),
-         _p10._0),
-         title)])));
+         _p12._0),
+         title)]));
          return {ctor: "_Tuple2",_0: wrappedSlider,_1: pct_};
       };
-      return A2($Signal.map,
-      wrap,
-      A4($Widget.slider,"traceAlpha",100,0,false));
-   };
+      var _p13 = A5($Widget.slider,
+      "traceAlpha",
+      100,
+      0,
+      false,
+      $Signal.constant(true));
+      var sliderSg = _p13._0;
+      var shadowFlow = _p13._1;
+      return {ctor: "_Tuple2"
+             ,_0: A2($Signal.map,wrap,sliderSg)
+             ,_1: shadowFlow};
+   }();
+   var shadowSg = $Signal.mergeMany(_U.list([$Basics.snd(traceAlphaSg)
+                                            ,$Basics.snd(tailSg)
+                                            ,$Basics.snd(mapAlphaSg)]));
    var VehicleOptions = F4(function (a,b,c,d) {
       return {traceAlpha: a
              ,tailLength: b
              ,mapAlpha: c
              ,selectedVehicles: d};
    });
-   var vehicleOptionsSg = function (shadowFlow) {
-      return A5($Signal.map4,
-      F4(function (a,b,c,d) {    return A4(VehicleOptions,a,b,c,d);}),
-      traceAlphaSg(shadowFlow),
-      tailSg(shadowFlow),
-      mapAlphaSg(shadowFlow),
-      vehicleListSg);
-   };
+   var vehicleOptionsSg = A5($Signal.map4,
+   F4(function (a,b,c,d) {    return A4(VehicleOptions,a,b,c,d);}),
+   $Basics.fst(traceAlphaSg),
+   $Basics.fst(tailSg),
+   $Basics.fst(mapAlphaSg),
+   vehicleListSg);
    return _elm.VehicleControl.values = {_op: _op
                                        ,VehicleOptions: VehicleOptions
                                        ,traceAlphaSg: traceAlphaSg
@@ -18924,7 +18861,8 @@ Elm.VehicleControl.make = function (_elm) {
                                        ,getCheckMailbox: getCheckMailbox
                                        ,checkBoxes: checkBoxes
                                        ,vehicleListSg: vehicleListSg
-                                       ,vehicleOptionsSg: vehicleOptionsSg};
+                                       ,vehicleOptionsSg: vehicleOptionsSg
+                                       ,shadowSg: shadowSg};
 };
 Elm.Main = Elm.Main || {};
 Elm.Main.make = function (_elm) {
@@ -18936,6 +18874,7 @@ Elm.Main.make = function (_elm) {
    $Color = Elm.Color.make(_elm),
    $Data = Elm.Data.make(_elm),
    $Debug = Elm.Debug.make(_elm),
+   $Drag = Elm.Drag.make(_elm),
    $FontAwesome = Elm.FontAwesome.make(_elm),
    $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
    $Graphics$Element = Elm.Graphics.Element.make(_elm),
@@ -18947,49 +18886,51 @@ Elm.Main.make = function (_elm) {
    $Result = Elm.Result.make(_elm),
    $Set = Elm.Set.make(_elm),
    $Signal = Elm.Signal.make(_elm),
+   $Signal$Extra = Elm.Signal.Extra.make(_elm),
    $Text = Elm.Text.make(_elm),
    $TileMap = Elm.TileMap.make(_elm),
-   $Time = Elm.Time.make(_elm),
    $VehicleControl = Elm.VehicleControl.make(_elm),
    $VideoControl = Elm.VideoControl.make(_elm);
    var _op = {};
-   var render = F4(function (mapp,_p0,data,vehicleOptions) {
-      var _p1 = _p0;
+   var render = F4(function (mapp,
+   videoOptions,
+   data,
+   vehicleOptions) {
       var bck = A2($Graphics$Element.opacity,
       0.85,
       A2($Graphics$Element.color,
       $Color.white,
-      A2($Graphics$Element.spacer,160,500)));
+      A2($Graphics$Element.spacer,160,580)));
       var baseMap = $TileMap.loadMap(mapp);
       var vehicleList = vehicleOptions.selectedVehicles;
       var filteredTraces = A2($List.filter,
-      function (_p2) {
-         var _p3 = _p2;
-         return A2($Set.member,_p3._0,vehicleList);
+      function (_p0) {
+         var _p1 = _p0;
+         return A2($Set.member,_p1._0,vehicleList);
       },
       data);
       var checkBoxes_ = $VehicleControl.checkBoxes(vehicleList);
-      var _p4 = vehicleOptions.tailLength;
-      var tailLength = _p4._0;
-      var tl = _p4._1;
+      var _p2 = vehicleOptions.tailLength;
+      var tailLength = _p2._0;
+      var tl = _p2._1;
       var traceWithInfo = $List.unzip(A2($List.map,
       function (vtrace) {
-         return A4($Data.showTrace,vtrace,_p1._0,tl,mapp);
+         return A4($Data.showTrace,vtrace,videoOptions.time,tl,mapp);
       },
       filteredTraces));
       var vehicleTrace = $Graphics$Collage.group($Basics.fst(traceWithInfo));
-      var _p5 = vehicleOptions.mapAlpha;
-      var mapAlpha = _p5._0;
-      var malpha = _p5._1;
-      var _p6 = vehicleOptions.traceAlpha;
-      var traceAlpha = _p6._0;
-      var talpha = _p6._1;
+      var _p3 = vehicleOptions.mapAlpha;
+      var mapAlpha = _p3._0;
+      var malpha = _p3._1;
+      var _p4 = vehicleOptions.traceAlpha;
+      var traceAlpha = _p4._0;
+      var talpha = _p4._1;
       var fullTrace = A2($Graphics$Collage.alpha,
       talpha,
       $Graphics$Collage.group(A2($List.map,
-      function (_p7) {
-         var _p8 = _p7;
-         return _p8._4;
+      function (_p5) {
+         var _p6 = _p5;
+         return _p6._4;
       },
       filteredTraces)));
       var vehicleStateView = $Graphics$Element.layers(_U.list([bck
@@ -18999,28 +18940,36 @@ Elm.Main.make = function (_elm) {
                                                               A2($Graphics$Element.below,
                                                               A2($Graphics$Element.below,
                                                               A2($Graphics$Element.below,
+                                                              A2($Graphics$Element.below,
+                                                              A2($Graphics$Element.below,
+                                                              A2($Graphics$Element.below,
+                                                              A2($Graphics$Element.below,
                                                               mapAlpha,
-                                                              A2($Graphics$Element.spacer,1,30)),
+                                                              A2($Graphics$Element.spacer,1,20)),
                                                               tailLength),
-                                                              A2($Graphics$Element.spacer,1,30)),
+                                                              A2($Graphics$Element.spacer,1,20)),
                                                               traceAlpha),
+                                                              A2($Graphics$Element.spacer,1,20)),
+                                                              $Basics.fst(videoOptions.timeDeltaCtl)),
+                                                              A2($Graphics$Element.spacer,1,20)),
+                                                              $Basics.fst(videoOptions.startTimeCtl)),
                                                               A2($Graphics$Element.spacer,1,30)),
                                                               checkBoxes_)]));
       var h = $Basics.snd(mapp.size);
       var progressBar_ = A2($Graphics$Collage.move,
-      {ctor: "_Tuple2",_0: 0,_1: 120 - $Basics.toFloat(h) / 2},
-      $Graphics$Collage.toForm(_p1._1));
+      {ctor: "_Tuple2",_0: 0,_1: 40 - $Basics.toFloat(h) / 2},
+      $Graphics$Collage.toForm(videoOptions.progressBar));
       var w = $Basics.fst(mapp.size);
       var anologClock_ = A2($Graphics$Collage.move,
       {ctor: "_Tuple2"
       ,_0: $Basics.toFloat(w) / 2 - 280
       ,_1: $Basics.toFloat(h) / 2 - 70},
-      _p1._2);
+      videoOptions.anologClock);
       var digitClock_ = A2($Graphics$Collage.move,
       {ctor: "_Tuple2"
       ,_0: $Basics.toFloat(w) / 2 - 100
-      ,_1: $Basics.toFloat(h) / 2 - 50},
-      $Graphics$Collage.toForm(_p1._3));
+      ,_1: $Basics.toFloat(h) / 2 - 30},
+      $Graphics$Collage.toForm(videoOptions.digitClock));
       var info = A2($Graphics$Collage.move,
       {ctor: "_Tuple2",_0: $Basics.toFloat(w) / 2 - 100,_1: 0},
       $Graphics$Collage.toForm(A4($Graphics$Element.container,
@@ -19089,6 +19038,30 @@ Elm.Main.make = function (_elm) {
               ,vehicleStateView_
               ,gitLink]));
    });
+   var mapMoveEvt = function () {
+      var check = function (_p7) {
+         var _p8 = _p7;
+         if (_p8._0) return false; else {
+               var _p9 = _p8._1;
+               if (_p9.ctor === "MoveFromTo") {
+                     return true;
+                  } else {
+                     return false;
+                  }
+            }
+      };
+      var mergedShadow = $Signal.mergeMany(_U.list([$VehicleControl.shadowSg
+                                                   ,$VideoControl.shadowSg]));
+      var filteredMouseEvt = A2($Signal.map,
+      $Basics.snd,
+      A3($Signal.filter,
+      check,
+      {ctor: "_Tuple2"
+      ,_0: false
+      ,_1: $Drag.StartAt({ctor: "_Tuple2",_0: 0,_1: 0})},
+      A2($Signal$Extra.zip,mergedShadow,$Drag.mouseEvents)));
+      return filteredMouseEvt;
+   }();
    var shadowFlow = $Signal.mailbox(false);
    var global_icons = _U.list([$FontAwesome.truck
                               ,$FontAwesome.ambulance
@@ -19123,6 +19096,10 @@ Elm.Main.make = function (_elm) {
                                                                    v.delta)} : _U.badPort("an object with fields `pos`, `delta`",
       v);
    });
+   var mapNetSg = A3($MapControl.mapSg,
+   mouseWheelIn,
+   screenSizeIn,
+   mapMoveEvt);
    var vehicleIn = Elm.Native.Port.make(_elm).inboundSignal("vehicleIn",
    "List\n    (\n    List\n        ( Int\n        , String\n        , Float\n        , Float\n        , Float\n        , Float\n        )\n    )",
    function (v) {
@@ -19155,25 +19132,21 @@ Elm.Main.make = function (_elm) {
       global_icons);
    }),
    vehicleIn,
-   A3($MapControl.mapSg,
-   mouseWheelIn,
-   screenSizeIn,
-   shadowFlow.signal),
+   mapNetSg,
    $VideoControl.startTimeSg,
    $VideoControl.timeDeltaSg);
    var main = A5($Signal.map4,
    render,
-   A3($MapControl.mapSg,
-   mouseWheelIn,
-   screenSizeIn,
-   shadowFlow.signal),
-   $VideoControl.videoSg(shadowFlow),
+   mapNetSg,
+   $VideoControl.videoOptionSg,
    dataSg,
-   $VehicleControl.vehicleOptionsSg(shadowFlow));
+   $VehicleControl.vehicleOptionsSg);
    return _elm.Main.values = {_op: _op
                              ,global_colors: global_colors
                              ,global_icons: global_icons
                              ,shadowFlow: shadowFlow
+                             ,mapMoveEvt: mapMoveEvt
+                             ,mapNetSg: mapNetSg
                              ,dataSg: dataSg
                              ,render: render
                              ,main: main};

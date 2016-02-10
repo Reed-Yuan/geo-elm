@@ -27,149 +27,127 @@ import MapControl exposing (..)
 
 animationSg = 
     let
-        anim startTime timeDelta = animation 0 |> from startTime |> to (startTime + (toFloat timeDelta) * 3600000) |> duration (240*Time.second)
+        anim startTime timeDelta = animation 0 |> from startTime |> to (startTime + (toFloat timeDelta) * 3600000) |> speed 400
     in
         Signal.map2 anim startTimeSg timeDeltaSg
 
 global_t0 = Utils.timeFromString "2016-01-11T00:00:00"
 global_t1 = Utils.timeFromString "2016-01-12T00:00:00"
 
-type VideoStatus = Playing | Pause | Stop
-
-type alias State =
-    {
-        clock: Time,
-        videoStatus: VideoStatus
-    }
+type VideoStatus = Play | Pause | Stop
     
-type VideoOps = Tick Time | PlayVideo | StopVideo | PauseVideo
-
-videoOps : Signal.Mailbox VideoOps
-videoOps = Signal.mailbox PlayVideo
-
-ops : Signal VideoOps
-ops = 
+videoOps : Signal.Mailbox VideoStatus
+videoOps = Signal.mailbox Stop
+        
+clock =
     let
-        clock_ = Tick <~ Time.fps 25
+        tick (tDelta, videoStatus) state = 
+            if videoStatus == Play
+            then state + tDelta
+            else if videoStatus == Stop
+            then 0
+            else state
+        realClock = Signal.foldp tick global_t0 (Signal.Extra.zip (Time.fps 25) videoOps.signal)
+        virtualClock t anime = animate t anime
     in
-        Signal.mergeMany [clock_, videoOps.signal]
-
-trans : VideoOps -> State -> State
-trans op state = 
-    case op of
-        Tick t -> 
+        Signal.map2 virtualClock realClock animationSg
+        
+videoControlSg =
+    let
+        wth = 580
+        drawControls videoStatus = 
             let
-                --isVideoDone = isDone state.clock animationSg
-                isVideoDone = False
-            in    
-                if state.videoStatus == Playing && not isVideoDone
-                    then {state | clock = state.clock + t}
-                    else if isVideoDone then {state | videoStatus = Stop, clock = 0}
-                    else state
-        PlayVideo -> {state | videoStatus = Playing}
-        StopVideo -> {state | videoStatus = Stop, clock = 0}
-        PauseVideo -> {state | videoStatus = Pause}
-
-videoStateSg = Signal.foldp trans (State 0 Playing) ops
-
-videoControl t videoStatus (startTime, iconnA, sliderA, t0) (timeDelta, iconnB, sliderB, tDelta) shadowFlow =
-    let
-        ht = 40
-        wth = 820
-        isPlaying = videoStatus == Playing
-        icon_stop = FontAwesome.stop Color.darkGreen 20 |> Html.toElement 40 20 
-                    |> Graphics.Input.clickable (Signal.message videoOps.address StopVideo)
-        icon_play = FontAwesome.play Color.darkGreen 20 |> Html.toElement 40 20 
-                    |> Graphics.Input.clickable (Signal.message videoOps.address PlayVideo)
-        icon_pause = FontAwesome.pause Color.darkGreen 20 |> Html.toElement 40 20
-                    |> Graphics.Input.clickable (Signal.message videoOps.address PauseVideo)
-        icon_ = (if isPlaying then icon_pause else icon_play) `beside` (if videoStatus == Stop then spacer 40 20 else icon_stop)
-        darkBar = segment (0,0) (400, 0) |> traced { defaultLine | width = 10, color = darkGrey } |> moveX -210
-        p = (t - global_t0) / (global_t1 - global_t0) * 400 
-        progress = segment (0,0) (p, 0) |> traced { defaultLine | width = 10, color = red } |> moveX -210
-        progressBar = collage 440 10 [darkBar, progress] `below` spacer 1 5
-        editIcon_1 = if (videoStatus /= Stop) then spacer 24 1 else iconnA
-        editIcon_2 = if (videoStatus /= Stop) then spacer 24 1 else iconnB
-        ctls = layers [spacer wth ht |> color white |> opacity 0.85,
-                spacer 20 1 `beside` startTime `beside` editIcon_1 `beside` spacer 10 1 `beside` progressBar 
-                `beside` timeDelta  `beside` editIcon_2 `beside` spacer 20 1 `beside` icon_ `below` spacer 1 10]
-                |> container wth 40 (bottomLeftAt (absolute 0) (absolute 0)) |> Graphics.Input.hoverable (Signal.message shadowFlow.address)
-        sliderA_ = if (videoStatus /= Stop) then empty else sliderA |> Graphics.Input.hoverable (Signal.message shadowFlow.address)        
-        sliderB_ = if (videoStatus /= Stop) then empty else sliderB |> Graphics.Input.hoverable (Signal.message shadowFlow.address)        
-        sliders = spacer 110 1 `beside` sliderA_ `beside` spacer 530 1 `beside` sliderB_
-                |> container wth 160 (bottomLeftAt (absolute 0) (absolute 0))
-    in 
-        sliders `above` spacer wth 10 `above` ctls
-
-clockk t = 
-    let
-        face = filled lightGrey (circle 60) |> alpha 0.6
-        outline_ = outlined ({ defaultLine | width = 4, color = Color.orange }) (circle 60)
-        hand_mm = segment (0,0) (fromPolar (50, degrees (90 - 6 * inSeconds t/60))) |> traced { defaultLine | width = 5, color = blue }
-        hand_hh = segment (0,0) (fromPolar (35, degrees (90 - 6 * inSeconds t/720))) |> traced { defaultLine | width = 8, color = green }
-        clk = Graphics.Collage.group [face, outline_, hand_mm, hand_hh] |> moveX -20
-        dTxt = Html.span [style [("padding", "4px 22px 4px 22px"), ("color", "blue"), ("font-size", "xx-large"), ("background-color", "rgba(255, 255, 255, 0.9)")]] 
-                [Html.text (timeToString t)] |> Html.toElement 160 60
-    in
-       (clk, dTxt)
-
-videoSg shadowFlow = 
-    let
-        aug state (startTime, iconnA, sliderA, t0) (timeSpan, iconnB, sliderB, tDelta) anime =
-            let
-                t = animate state.clock anime
-                progressBar = videoControl t state.videoStatus (startTime, iconnA, sliderA, t0) (timeSpan, iconnB, sliderB, tDelta) shadowFlow
-                (anologClock, digitClock) = clockk t
+                icon_stop = FontAwesome.stop Color.darkGreen 20 |> Html.toElement 40 20 
+                            |> Graphics.Input.clickable (Signal.message videoOps.address Stop)
+                icon_play = FontAwesome.play Color.darkGreen 20 |> Html.toElement 40 20 
+                            |> Graphics.Input.clickable (Signal.message videoOps.address Play)
+                icon_pause = FontAwesome.pause Color.darkGreen 20 |> Html.toElement 40 20
+                            |> Graphics.Input.clickable (Signal.message videoOps.address Pause)
             in
-                (t, progressBar, anologClock, digitClock)
-    in
-        Signal.map4 aug videoStateSg startTimeCtlSg timeSpanCtlSg animationSg
+                (if videoStatus == Play then icon_pause else icon_play) `beside` (if videoStatus == Stop then spacer 40 20 else icon_stop) `below` spacer 1 5
+                
+        drawProgress  t t0 td =
+            let
+                darkBar = segment (0,0) (400, 0) |> traced { defaultLine | width = 10, color = darkGrey } |> moveX -210
+                p = (t - t0) / (toFloat td * 3600000) * 400 
+                progress = segment (0,0) (p, 0) |> traced { defaultLine | width = 10, color = red } |> moveX -210
+            in
+                collage 440 10 [darkBar, progress]
+                
+        drawCtlAndPrgs videoStatus t t0 td = layers [spacer wth 30 |> color white |> opacity 0.85 
+                       , spacer 40 10 `beside` (drawControls videoStatus) `beside` spacer 10 10 `beside` ((drawProgress t t0 td) `below` spacer 1 10)]        
+    in 
+        Signal.map4 drawCtlAndPrgs videoOps.signal clock startTimeSg timeDeltaSg
 
+analogClockSg = 
+    let
+        analogClock t = 
+            let
+                face = filled lightGrey (circle 60) |> alpha 0.6
+                outline_ = outlined ({ defaultLine | width = 4, color = Color.orange }) (circle 60)
+                hand_mm = segment (0,0) (fromPolar (50, degrees (90 - 6 * inSeconds t/60))) |> traced { defaultLine | width = 5, color = green }
+                hand_hh = segment (0,0) (fromPolar (35, degrees (90 - 6 * inSeconds t/720))) |> traced { defaultLine | width = 8, color = blue }
+            in
+               Graphics.Collage.group [face, outline_, hand_mm, hand_hh]
+    in
+        Signal.map analogClock clock
+        
+digitalClockSg = 
+    let
+        digitalClock t = 
+            let
+                dTxt = timeToString t |> Text.fromString |> Text.height 35 |> Text.bold |> Text.color green |> leftAligned
+            in
+               layers [spacer 160 40 |> color white |> opacity 0.85, spacer 15 1 `beside` dTxt]
+    in
+        Signal.map digitalClock clock
+        
 startTimeCtlSg = 
     let
-        f (iconn, sliderr, pct) =
+        (sliderSg, shadowFlow) = Widget.slider "startTime" 100 0 False (Signal.map ((==) Stop) videoOps.signal)
+        f (slider_, pct) =
             let
                 t =  ((pct * 23 |> round) * 3600000) |> toFloat |> (+) global_t0
-                timeNode = Html.span 
-                            [style [("font-size", "large"), ("font-weight", "bold"), ("color", "blue")]] 
-                            [Html.text (timeToString t)] |> (Html.toElement 100 30)
+                title = Html.span [style [("padding-left", "10px"),("font-weight", "bold"),("font-size", "large")]]
+                            [Html.text ("From: " ++ timeToString t)] |> Html.toElement 160 30
+                wrappedSlider = layers [spacer 20 1 `beside` slider_ `below` title]
             in
-                ( timeNode, iconn, sliderr, t)
+                (wrappedSlider, t)
     in
-        Signal.map f (clickSlider "startTime" 100 0 True)
-        
-startTimeSg = Signal.map (\(_, _, _, t) -> t) startTimeCtlSg
-timeDeltaSg = Signal.map (\(_, _, _, t) -> t) timeSpanCtlSg
+        (Signal.map f sliderSg, shadowFlow)
 
 timeSpanCtlSg = 
     let
-        f (iconn, sliderr, pct) =
+        (sliderSg, shadowFlow) = Widget.slider "timeDelta" 100 1 False (Signal.map ((==) Stop) videoOps.signal)
+        f (slider_, pct) =
             let
                 t =  pct * 23 |> round |> (+) 1
-                timeNode = Html.span 
-                            [style [("font-size", "large"), ("font-weight", "bold"), ("color", "blue")]] 
-                            [Html.text ("[ " ++ (toString t) ++ (if t == 1 then " hour" else " hours") ++ " ]")] |> (Html.toElement 100 30)
+                title = Html.span [style [("padding-left", "10px"),("font-weight", "bold"),("font-size", "large")]] 
+                            [Html.text ("Span: " ++ (toString t) ++ (if t == 1 then " hour" else " hours"))]|> Html.toElement 160 30
+                wrappedSlider = layers [spacer 20 1 `beside` slider_ `below` title]
             in
-                ( timeNode, iconn, sliderr, t)
+                (wrappedSlider, t)
     in
-        Signal.map f (clickSlider "timeDelta" 100 1 True)
+        (Signal.map f sliderSg, shadowFlow)
+        
+startTimeSg = Signal.map (\( _, t) -> t) (fst startTimeCtlSg)
+timeDeltaSg = Signal.map (\( _, t) -> t) (fst timeSpanCtlSg)
+shadowSg = Signal.mergeMany [snd startTimeCtlSg, snd timeSpanCtlSg]
 
-clickFlow : Signal.Mailbox String
-clickFlow = Signal.mailbox ""
+type alias VideoOptions =
+    {
+        time: Time,
+        progressBar: Element,
+        anologClock: Form,
+        digitClock: Element,
+        startTimeCtl: (Element, Float),
+        timeDeltaCtl: (Element, Int)
+    }
 
-clickSlider : String -> Int -> Float -> Bool -> Signal (Element, Element, Float)
-clickSlider name width initValue isVertical = 
+videoOptionSg =
     let
-        editStateSg_ : Signal Bool
-        editStateSg_ = Signal.foldp (\f state -> if f then not state else state ) False ((\s -> s == name) <~ clickFlow.signal)
-        editStateSg = Signal.map2 (\s x -> if x == PlayVideo then False else s) editStateSg_ videoOps.signal
-        editIcon = (FontAwesome.pencil Color.darkGreen 24) |> Html.toElement 24 24 |> Graphics.Input.clickable (Signal.message clickFlow.address name)
-        dock isEditing (slider, pct) = 
-            let
-                sliderBar = (layers [spacer 40 120 |> color white |> opacity 0.85, spacer 10 1 `beside` slider `below` spacer 1 10])
-            in
-                if isEditing
-                then (editIcon, sliderBar, pct)
-                else (editIcon, spacer 40 0, pct)
+        videoSg_ = Signal.map5 VideoOptions clock videoControlSg analogClockSg digitalClockSg (fst startTimeCtlSg)
     in
-        Signal.map2 dock editStateSg (Widget.slider name width initValue isVertical)
+        Signal.map2 (\x y -> x y) videoSg_ (fst timeSpanCtlSg)
+        
+        

@@ -23,45 +23,48 @@ type alias VehicleOptions =
         selectedVehicles: Set Int
     }
         
-traceAlphaSg shadowFlow = 
+traceAlphaSg = 
     let
+        (sliderSg, shadowFlow) = Widget.slider "traceAlpha" 100 0 False (Signal.constant True)
         wrap (slider_, pct) = 
             let
                 pct_ = Exts.Float.roundTo 2 pct
                 title = Html.span [style [("padding-left", "10px"),("font-weight", "bold"),("font-size", "large")]] 
-                        [Html.text ("Trace Alpha: " ++ (toString pct_))] |> Html.toElement 160 40
-                wrappedSlider = layers [spacer 20 1 `beside` slider_ `below` title] |> (Graphics.Input.hoverable (Signal.message shadowFlow.address))
+                        [Html.text ("Trace Alpha: " ++ (toString pct_))] |> Html.toElement 160 30
+                wrappedSlider = layers [spacer 20 1 `beside` slider_ `below` title]
             in
                 (wrappedSlider, pct_)
     in
-        Signal.map wrap (Widget.slider "traceAlpha" 100 0 False) 
+        (Signal.map wrap sliderSg, shadowFlow)
 
-mapAlphaSg shadowFlow = 
+mapAlphaSg = 
     let
+        (sliderSg, shadowFlow) = Widget.slider "mapAlpha" 100 0.6 False (Signal.constant True)
         wrap (slider_, pct) = 
             let
                 pct_ = Exts.Float.roundTo 2 pct
                 title = Html.span [style [("padding-left", "10px"),("font-weight", "bold"),("font-size", "large")]] 
-                        [Html.text ("Map Alpha: " ++ (toString pct_))] |> Html.toElement 160 40
-                wrappedSlider = layers [spacer 20 1 `beside` slider_ `below` title] |> (Graphics.Input.hoverable (Signal.message shadowFlow.address))
+                        [Html.text ("Map Alpha: " ++ (toString pct_))] |> Html.toElement 160 30
+                wrappedSlider = layers [spacer 20 1 `beside` slider_ `below` title]
             in
                 (wrappedSlider, pct_)
     in
-        Signal.map wrap (Widget.slider "mapAlpha" 100 0.6 False) 
+        (Signal.map wrap sliderSg, shadowFlow) 
         
-tailSg shadowFlow = 
+tailSg = 
     let
+        (sliderSg, shadowFlow) = Widget.slider "tailLength" 100 0.5 False (Signal.constant True)
         wrap (slider_, pct) = 
             let
                 pct_ = (Exts.Float.roundTo 2 pct) * 120 |> round
                 pct__ = pct_ - (pct_ % 5)
                 title = Html.span [style [("padding-left", "10px"),("font-weight", "bold"),("font-size", "large")]] 
-                        [Html.text ("Tail: " ++ (toString pct__) ++ " minutes")] |> Html.toElement 160 40
-                wrappedSlider = layers [spacer 20 1 `beside` slider_ `below` title] |> (Graphics.Input.hoverable (Signal.message shadowFlow.address))
+                        [Html.text ("Tail: " ++ (toString pct__) ++ " minutes")] |> Html.toElement 160 30
+                wrappedSlider = layers [spacer 20 1 `beside` slider_ `below` title]
             in
                 (wrappedSlider, pct__)
     in
-        Signal.map wrap (Widget.slider "tailLength" 100 0.5 False) 
+        (Signal.map wrap sliderSg, shadowFlow) 
 
 global_vehicleList = [2012347, 2017231, 2030413, 2036207, 2026201]
 global_colors = [Color.red, Color.blue, Color.brown, Color.orange, Color.darkGreen]
@@ -100,6 +103,7 @@ vehicleListSg =
     in
         List.foldr foldStep (Signal.constant Set.empty) checkMailboxes
         
-vehicleOptionsSg shadowFlow = Signal.map4 (\a b c d -> VehicleOptions a b c d) (traceAlphaSg shadowFlow) (tailSg shadowFlow) (mapAlphaSg shadowFlow) vehicleListSg
+vehicleOptionsSg = Signal.map4 (\a b c d -> VehicleOptions a b c d) (fst traceAlphaSg) (fst tailSg) (fst mapAlphaSg) vehicleListSg
+shadowSg = Signal.mergeMany [snd traceAlphaSg, snd tailSg, snd mapAlphaSg]
     
     
