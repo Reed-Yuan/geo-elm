@@ -18309,6 +18309,7 @@ Elm.VideoControl.make = function (_elm) {
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm),
    $Signal$Extra = Elm.Signal.Extra.make(_elm),
+   $Task = Elm.Task.make(_elm),
    $Text = Elm.Text.make(_elm),
    $Time = Elm.Time.make(_elm),
    $Utils = Elm.Utils.make(_elm),
@@ -18323,7 +18324,9 @@ Elm.VideoControl.make = function (_elm) {
              ,timeDeltaCtl: f};
    });
    var Stop = {ctor: "Stop"};
-   var videoOps = $Signal.mailbox(Stop);
+   var Pause = {ctor: "Pause"};
+   var Play = {ctor: "Play"};
+   var videoOps = $Signal.mailbox(Play);
    var timeSpanCtlSg = function () {
       var f = function (_p0) {
          var _p1 = _p0;
@@ -18354,7 +18357,7 @@ Elm.VideoControl.make = function (_elm) {
       var _p2 = A5($Widget.slider,
       "timeDelta",
       100,
-      0.3,
+      0.15,
       false,
       A2($Signal.map,
       F2(function (x,y) {    return _U.eq(x,y);})(Stop),
@@ -18371,16 +18374,26 @@ Elm.VideoControl.make = function (_elm) {
       return _p4._1;
    },
    $Basics.fst(timeSpanCtlSg));
-   var Pause = {ctor: "Pause"};
-   var Play = {ctor: "Play"};
+   var realClock = function () {
+      var tick = F2(function (_p5,state) {
+         var _p6 = _p5;
+         var _p7 = _p6._1;
+         return _U.eq(_p7,Play) ? state + _p6._0 : _U.eq(_p7,
+         Stop) ? 0 : state;
+      });
+      return A3($Signal.foldp,
+      tick,
+      0,
+      A2($Signal$Extra.zip,$Time.fps(25),videoOps.signal));
+   }();
    var global_t1 = $Utils.timeFromString("2016-01-12T00:00:00");
    var global_t0 = $Utils.timeFromString("2016-01-11T00:00:00");
    var startTimeCtlSg = function () {
-      var f = function (_p5) {
-         var _p6 = _p5;
+      var f = function (_p8) {
+         var _p9 = _p8;
          var t = A2(F2(function (x,y) {    return x + y;}),
          global_t0,
-         $Basics.toFloat($Basics.round(_p6._1 * 23) * 3600000));
+         $Basics.toFloat($Basics.round(_p9._1 * 23) * 3600000));
          var title = A3($Html.toElement,
          160,
          30,
@@ -18396,28 +18409,28 @@ Elm.VideoControl.make = function (_elm) {
          var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
          A2($Graphics$Element.beside,
          A2($Graphics$Element.spacer,20,1),
-         _p6._0),
+         _p9._0),
          title)]));
          return {ctor: "_Tuple2",_0: wrappedSlider,_1: t};
       };
-      var _p7 = A5($Widget.slider,
+      var _p10 = A5($Widget.slider,
       "startTime",
       100,
-      0.2,
+      0.25,
       false,
       A2($Signal.map,
       F2(function (x,y) {    return _U.eq(x,y);})(Stop),
       videoOps.signal));
-      var sliderSg = _p7._0;
-      var shadowFlow = _p7._1;
+      var sliderSg = _p10._0;
+      var shadowFlow = _p10._1;
       return {ctor: "_Tuple2"
              ,_0: A2($Signal.map,f,sliderSg)
              ,_1: shadowFlow};
    }();
    var startTimeSg = A2($Signal.map,
-   function (_p8) {
-      var _p9 = _p8;
-      return _p9._1;
+   function (_p11) {
+      var _p12 = _p11;
+      return _p12._1;
    },
    $Basics.fst(startTimeCtlSg));
    var shadowSg = $Signal.mergeMany(_U.list([$Basics.snd(startTimeCtlSg)
@@ -18436,16 +18449,6 @@ Elm.VideoControl.make = function (_elm) {
       var virtualClock = F2(function (t,anime) {
          return A2($Animation.animate,t,anime);
       });
-      var tick = F2(function (_p10,state) {
-         var _p11 = _p10;
-         var _p12 = _p11._1;
-         return _U.eq(_p12,Play) ? state + _p11._0 : _U.eq(_p12,
-         Stop) ? 0 : state;
-      });
-      var realClock = A3($Signal.foldp,
-      tick,
-      global_t0,
-      A2($Signal$Extra.zip,$Time.fps(25),videoOps.signal));
       return A3($Signal.map2,virtualClock,realClock,animationSg);
    }();
    var videoControlSg = function () {
@@ -18588,6 +18591,14 @@ Elm.VideoControl.make = function (_elm) {
       videoSg_,
       $Basics.fst(timeSpanCtlSg));
    }();
+   var videoRewindTaskSg = A3($Signal.map2,
+   F2(function (t,anime) {
+      return A2($Animation.isDone,t,anime) ? A2($Signal.send,
+      videoOps.address,
+      Stop) : $Task.succeed({ctor: "_Tuple0"});
+   }),
+   realClock,
+   animationSg);
    return _elm.VideoControl.values = {_op: _op
                                      ,animationSg: animationSg
                                      ,global_t0: global_t0
@@ -18596,7 +18607,9 @@ Elm.VideoControl.make = function (_elm) {
                                      ,Pause: Pause
                                      ,Stop: Stop
                                      ,videoOps: videoOps
+                                     ,realClock: realClock
                                      ,clock: clock
+                                     ,videoRewindTaskSg: videoRewindTaskSg
                                      ,videoControlSg: videoControlSg
                                      ,analogClockSg: analogClockSg
                                      ,digitalClockSg: digitalClockSg
@@ -18887,6 +18900,7 @@ Elm.Main.make = function (_elm) {
    $Set = Elm.Set.make(_elm),
    $Signal = Elm.Signal.make(_elm),
    $Signal$Extra = Elm.Signal.Extra.make(_elm),
+   $Task = Elm.Task.make(_elm),
    $Text = Elm.Text.make(_elm),
    $TileMap = Elm.TileMap.make(_elm),
    $VehicleControl = Elm.VehicleControl.make(_elm),
@@ -19073,6 +19087,8 @@ Elm.Main.make = function (_elm) {
                                ,$Color.brown
                                ,$Color.orange
                                ,$Color.darkGreen]);
+   var runner = Elm.Native.Task.make(_elm).performSignal("runner",
+   $VideoControl.videoRewindTaskSg);
    var screenSizeIn = Elm.Native.Port.make(_elm).inboundSignal("screenSizeIn",
    "( Int, Int )",
    function (v) {

@@ -21,6 +21,8 @@ import Animation exposing (..)
 import FontAwesome
 import Exts.Float
 import Mouse
+import Task
+import Signal
 
 import Widget
 import MapControl exposing (..)
@@ -37,9 +39,9 @@ global_t1 = Utils.timeFromString "2016-01-12T00:00:00"
 type VideoStatus = Play | Pause | Stop
     
 videoOps : Signal.Mailbox VideoStatus
-videoOps = Signal.mailbox Stop
+videoOps = Signal.mailbox Play
         
-clock =
+realClock = 
     let
         tick (tDelta, videoStatus) state = 
             if videoStatus == Play
@@ -47,10 +49,16 @@ clock =
             else if videoStatus == Stop
             then 0
             else state
-        realClock = Signal.foldp tick global_t0 (Signal.Extra.zip (Time.fps 25) videoOps.signal)
+    in
+        Signal.foldp tick 0 (Signal.Extra.zip (Time.fps 25) videoOps.signal)
+
+clock =
+    let
         virtualClock t anime = animate t anime
     in
         Signal.map2 virtualClock realClock animationSg
+        
+videoRewindTaskSg = Signal.map2 (\t anime -> if isDone t anime then Signal.send videoOps.address Stop else Task.succeed ()) realClock animationSg
         
 videoControlSg =
     let
@@ -104,7 +112,7 @@ digitalClockSg =
         
 startTimeCtlSg = 
     let
-        (sliderSg, shadowFlow) = Widget.slider "startTime" 100 0.2 False (Signal.map ((==) Stop) videoOps.signal)
+        (sliderSg, shadowFlow) = Widget.slider "startTime" 100 0.25 False (Signal.map ((==) Stop) videoOps.signal)
         f (slider_, pct) =
             let
                 t =  ((pct * 23 |> round) * 3600000) |> toFloat |> (+) global_t0
@@ -118,7 +126,7 @@ startTimeCtlSg =
 
 timeSpanCtlSg = 
     let
-        (sliderSg, shadowFlow) = Widget.slider "timeDelta" 100 0.3 False (Signal.map ((==) Stop) videoOps.signal)
+        (sliderSg, shadowFlow) = Widget.slider "timeDelta" 100 0.15 False (Signal.map ((==) Stop) videoOps.signal)
         f (slider_, pct) =
             let
                 t =  pct * 23 |> round |> (+) 1

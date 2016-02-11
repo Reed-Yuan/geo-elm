@@ -13,6 +13,7 @@ import Text
 import Graphics.Input
 import Signal.Extra exposing (..)
 import Drag exposing (..)
+import Task exposing (..)
 
 import Data exposing (..)
 import MapControl exposing (..)
@@ -25,6 +26,9 @@ port vehicleIn : Signal (List (List (Int, String, Float, Float, Float, Float)))
 port mouseWheelIn : Signal MouseWheel
 port screenSizeIn : Signal (Int, Int)
 
+port runner : Signal (Task x ())
+port runner = VideoControl.videoRewindTaskSg
+  
 global_colors : List Color
 global_colors = [Color.red, Color.blue, Color.brown, Color.orange, Color.darkGreen]
 global_icons : List (Color -> Int -> Html.Html)
