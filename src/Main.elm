@@ -57,8 +57,21 @@ dataSg : Signal (List VehiclTrace)
 dataSg = Signal.map4 (\gps mapp startTime timeDelta -> List.map3 (\x y z -> Data.parseGps x y z mapp startTime timeDelta) gps global_colors global_icons) 
             vehicleIn mapNetSg VideoControl.startTimeSg VideoControl.timeDeltaSg
 
-render : TileMap.Map -> VideoOptions -> List Data.VehiclTrace -> VehicleOptions -> Element
-render  mapp videoOptions data vehicleOptions = 
+hideVehiclesMbx : Signal.Mailbox ()
+hideVehiclesMbx = Signal.mailbox ()
+
+hideInfoMbx : Signal.Mailbox ()
+hideInfoMbx = Signal.mailbox ()
+
+hideCtlSg =
+    let
+        hideVehiclesSg = Signal.foldp (\_ b -> not b) False hideVehiclesMbx.signal            
+        hideInfoSg = Signal.foldp (\_ b -> not b) False hideInfoMbx.signal
+    in
+        Signal.Extra.zip hideVehiclesSg hideInfoSg
+
+render : TileMap.Map -> VideoOptions -> List Data.VehiclTrace -> VehicleOptions -> (Bool, Bool) -> Element
+render  mapp videoOptions data vehicleOptions (hideVehicles, hideInfo) = 
     let
         w = mapp.size |> fst
         h = mapp.size |> snd
@@ -73,32 +86,53 @@ render  mapp videoOptions data vehicleOptions =
         anologClock_ = videoOptions.anologClock |> move ((toFloat w)/2 - 280, (toFloat h)/2 - 70)
         digitClock_ = videoOptions.digitClock |> toForm |> move ((toFloat w)/2 - 100, (toFloat h)/2 - 50)
         progressBar_ = videoOptions.progressBar |> toForm |> move (0, 40 - (toFloat h)/2)
+        
         traceWithInfo = List.map (\vtrace -> showTrace vtrace videoOptions.time tl mapp) filteredTraces |> List.unzip
         vehicleTrace = fst traceWithInfo |> group
-        info = (snd traceWithInfo) |> (List.foldr above Graphics.Element.empty) |> container 160 800 (midTopAt (absolute 80) (absolute 40))
-                |> toForm |> move ((toFloat w)/2 - 100, 0)
         fullTrace = List.map (\(_, _, _, _, vtrace, _) -> vtrace) filteredTraces |> group |> alpha talpha
-        bck = spacer 160 580 |> color white |> opacity 0.85
-        checkBoxes_ = checkBoxes vehicleList
-        vehicleStateView = layers [bck, 
-                            mapAlpha `below` (spacer 1 20) 
-                            `below` tailLength `below` (spacer 1 20) 
-                            `below` traceAlpha `below` (spacer 1 20)
-                            `below` (fst videoOptions.timeDeltaCtl) `below` (spacer 1 20)
-                            `below` (fst videoOptions.startTimeCtl) `below` (spacer 1 30)
-                            `below` checkBoxes_]
-        vehicleStateView_ = vehicleStateView |> toForm |> move (100 - (toFloat w)/2, (toFloat h)/2 - 380)
+        
+        vehicleInfo =
+            let
+                icn = (if hideInfo then FontAwesome.arrow_down white 20 else FontAwesome.arrow_up white 20) |> Html.toElement 20 20
+                switch = layers [spacer 160 20 |> color grey |> Graphics.Element.opacity 0.5, spacer 70 20 `beside` icn]  
+                             |> Graphics.Input.clickable (Signal.message hideInfoMbx.address ())
+                info_ = (snd traceWithInfo) |> (List.foldr above Graphics.Element.empty) 
+                        |> container 160 800 (midTopAt (absolute 80) (absolute 0))
+                        
+                view = (if hideInfo then switch else switch `above` info_)
+           in
+                view |> toForm |> move ((toFloat w)/2 - 100, if hideInfo then 380 else -20)
+        
+        vehicleStateView_ = 
+            let
+                bck = spacer 160 580 |> color white |> opacity 0.85
+                checkBoxes_ = checkBoxes vehicleList
+                vehicleStateView = layers [bck, 
+                                    mapAlpha `below` (spacer 1 20) 
+                                    `below` tailLength `below` (spacer 1 20) 
+                                    `below` traceAlpha `below` (spacer 1 20)
+                                    `below` (fst videoOptions.timeDeltaCtl) `below` (spacer 1 20)
+                                    `below` (fst videoOptions.startTimeCtl) `below` (spacer 1 30)
+                                    `below` checkBoxes_]
+                icn = (if hideVehicles then FontAwesome.arrow_down white 20 else FontAwesome.arrow_up white 20) |> Html.toElement 20 20
+                switch = layers [spacer 160 20 |> color grey |> Graphics.Element.opacity 0.5, spacer 70 20 `beside` icn]  
+                             |> Graphics.Input.clickable (Signal.message hideVehiclesMbx.address ())
+                view = (if hideVehicles then switch else switch `above` vehicleStateView)
+            in 
+                view |> toForm |> move (100 - (toFloat w)/2, if hideVehicles then (toFloat h)/2 - 90 else (toFloat h)/2 - 380)
+                
         gitLink =
                 let
                     a = Text.fromString "Source code @GitHub" |> Text.link "https://github.com/Reed-Yuan/geo-elm.git" |> Text.height 22 |> leftAligned
                     b = spacer 240 40 |> color white |> opacity 0.85
                 in
-                    layers [b, (spacer 20 1) `beside` a `below` (spacer 1 10)] |> toForm |> move (140 - (toFloat w)/2, (toFloat h)/2 - 780)
+                    layers [b, (spacer 20 1) `beside` a `below` (spacer 1 10)] |> toForm |> move (140 - (toFloat w)/2, 45 - (toFloat h)/2)
+                    
         title = Html.span [style [("color", "blue"), ("font-size", "xx-large")]] [Html.text "GPS Visualization with ELM: 5 Vehicles in 24 Hours"] 
                 |> Html.toElement 700 60 |> toForm |> move (380 - (toFloat w)/2,  (toFloat h)/2 - 40)
     in
-        collage w h [toForm baseMap |> alpha malpha, fullTrace, vehicleTrace, info, title, anologClock_, digitClock_, progressBar_, vehicleStateView_, gitLink]
+        collage w h [toForm baseMap |> alpha malpha, fullTrace, vehicleTrace,  title, anologClock_, digitClock_, progressBar_, vehicleStateView_, vehicleInfo,gitLink]
 
 main : Signal Element
-main = Signal.map4 render mapNetSg VideoControl.videoOptionSg dataSg vehicleOptionsSg
+main = Signal.map5 render mapNetSg VideoControl.videoOptionSg dataSg vehicleOptionsSg hideCtlSg
         

@@ -18891,6 +18891,7 @@ Elm.Main.make = function (_elm) {
    $FontAwesome = Elm.FontAwesome.make(_elm),
    $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
    $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $Graphics$Input = Elm.Graphics.Input.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
@@ -18906,69 +18907,58 @@ Elm.Main.make = function (_elm) {
    $VehicleControl = Elm.VehicleControl.make(_elm),
    $VideoControl = Elm.VideoControl.make(_elm);
    var _op = {};
-   var render = F4(function (mapp,
+   var hideInfoMbx = $Signal.mailbox({ctor: "_Tuple0"});
+   var hideVehiclesMbx = $Signal.mailbox({ctor: "_Tuple0"});
+   var hideCtlSg = function () {
+      var hideInfoSg = A3($Signal.foldp,
+      F2(function (_p0,b) {    return $Basics.not(b);}),
+      false,
+      hideInfoMbx.signal);
+      var hideVehiclesSg = A3($Signal.foldp,
+      F2(function (_p1,b) {    return $Basics.not(b);}),
+      false,
+      hideVehiclesMbx.signal);
+      return A2($Signal$Extra.zip,hideVehiclesSg,hideInfoSg);
+   }();
+   var render = F5(function (mapp,
    videoOptions,
    data,
-   vehicleOptions) {
-      var bck = A2($Graphics$Element.opacity,
-      0.85,
-      A2($Graphics$Element.color,
-      $Color.white,
-      A2($Graphics$Element.spacer,160,580)));
+   vehicleOptions,
+   _p2) {
+      var _p3 = _p2;
+      var _p12 = _p3._0;
+      var _p11 = _p3._1;
       var baseMap = $TileMap.loadMap(mapp);
       var vehicleList = vehicleOptions.selectedVehicles;
       var filteredTraces = A2($List.filter,
-      function (_p0) {
-         var _p1 = _p0;
-         return A2($Set.member,_p1._0,vehicleList);
+      function (_p4) {
+         var _p5 = _p4;
+         return A2($Set.member,_p5._0,vehicleList);
       },
       data);
-      var checkBoxes_ = $VehicleControl.checkBoxes(vehicleList);
-      var _p2 = vehicleOptions.tailLength;
-      var tailLength = _p2._0;
-      var tl = _p2._1;
+      var _p6 = vehicleOptions.tailLength;
+      var tailLength = _p6._0;
+      var tl = _p6._1;
       var traceWithInfo = $List.unzip(A2($List.map,
       function (vtrace) {
          return A4($Data.showTrace,vtrace,videoOptions.time,tl,mapp);
       },
       filteredTraces));
       var vehicleTrace = $Graphics$Collage.group($Basics.fst(traceWithInfo));
-      var _p3 = vehicleOptions.mapAlpha;
-      var mapAlpha = _p3._0;
-      var malpha = _p3._1;
-      var _p4 = vehicleOptions.traceAlpha;
-      var traceAlpha = _p4._0;
-      var talpha = _p4._1;
+      var _p7 = vehicleOptions.mapAlpha;
+      var mapAlpha = _p7._0;
+      var malpha = _p7._1;
+      var _p8 = vehicleOptions.traceAlpha;
+      var traceAlpha = _p8._0;
+      var talpha = _p8._1;
       var fullTrace = A2($Graphics$Collage.alpha,
       talpha,
       $Graphics$Collage.group(A2($List.map,
-      function (_p5) {
-         var _p6 = _p5;
-         return _p6._4;
+      function (_p9) {
+         var _p10 = _p9;
+         return _p10._4;
       },
       filteredTraces)));
-      var vehicleStateView = $Graphics$Element.layers(_U.list([bck
-                                                              ,A2($Graphics$Element.below,
-                                                              A2($Graphics$Element.below,
-                                                              A2($Graphics$Element.below,
-                                                              A2($Graphics$Element.below,
-                                                              A2($Graphics$Element.below,
-                                                              A2($Graphics$Element.below,
-                                                              A2($Graphics$Element.below,
-                                                              A2($Graphics$Element.below,
-                                                              A2($Graphics$Element.below,
-                                                              A2($Graphics$Element.below,
-                                                              mapAlpha,
-                                                              A2($Graphics$Element.spacer,1,20)),
-                                                              tailLength),
-                                                              A2($Graphics$Element.spacer,1,20)),
-                                                              traceAlpha),
-                                                              A2($Graphics$Element.spacer,1,20)),
-                                                              $Basics.fst(videoOptions.timeDeltaCtl)),
-                                                              A2($Graphics$Element.spacer,1,20)),
-                                                              $Basics.fst(videoOptions.startTimeCtl)),
-                                                              A2($Graphics$Element.spacer,1,30)),
-                                                              checkBoxes_)]));
       var h = $Basics.snd(mapp.size);
       var progressBar_ = A2($Graphics$Collage.move,
       {ctor: "_Tuple2",_0: 0,_1: 40 - $Basics.toFloat(h) / 2},
@@ -18984,23 +18974,96 @@ Elm.Main.make = function (_elm) {
       ,_0: $Basics.toFloat(w) / 2 - 100
       ,_1: $Basics.toFloat(h) / 2 - 50},
       $Graphics$Collage.toForm(videoOptions.digitClock));
-      var info = A2($Graphics$Collage.move,
-      {ctor: "_Tuple2",_0: $Basics.toFloat(w) / 2 - 100,_1: 0},
-      $Graphics$Collage.toForm(A4($Graphics$Element.container,
-      160,
-      800,
-      A2($Graphics$Element.midTopAt,
-      $Graphics$Element.absolute(80),
-      $Graphics$Element.absolute(40)),
-      A3($List.foldr,
-      $Graphics$Element.above,
-      $Graphics$Element.empty,
-      $Basics.snd(traceWithInfo)))));
-      var vehicleStateView_ = A2($Graphics$Collage.move,
-      {ctor: "_Tuple2"
-      ,_0: 100 - $Basics.toFloat(w) / 2
-      ,_1: $Basics.toFloat(h) / 2 - 380},
-      $Graphics$Collage.toForm(vehicleStateView));
+      var vehicleInfo = function () {
+         var info_ = A4($Graphics$Element.container,
+         160,
+         800,
+         A2($Graphics$Element.midTopAt,
+         $Graphics$Element.absolute(80),
+         $Graphics$Element.absolute(0)),
+         A3($List.foldr,
+         $Graphics$Element.above,
+         $Graphics$Element.empty,
+         $Basics.snd(traceWithInfo)));
+         var icn = A3($Html.toElement,
+         20,
+         20,
+         _p11 ? A2($FontAwesome.arrow_down,
+         $Color.white,
+         20) : A2($FontAwesome.arrow_up,$Color.white,20));
+         var $switch = A2($Graphics$Input.clickable,
+         A2($Signal.message,hideInfoMbx.address,{ctor: "_Tuple0"}),
+         $Graphics$Element.layers(_U.list([A2($Graphics$Element.opacity,
+                                          0.5,
+                                          A2($Graphics$Element.color,
+                                          $Color.grey,
+                                          A2($Graphics$Element.spacer,160,20)))
+                                          ,A2($Graphics$Element.beside,
+                                          A2($Graphics$Element.spacer,70,20),
+                                          icn)])));
+         var view = _p11 ? $switch : A2($Graphics$Element.above,
+         $switch,
+         info_);
+         return A2($Graphics$Collage.move,
+         {ctor: "_Tuple2"
+         ,_0: $Basics.toFloat(w) / 2 - 100
+         ,_1: _p11 ? 380 : -20},
+         $Graphics$Collage.toForm(view));
+      }();
+      var vehicleStateView_ = function () {
+         var icn = A3($Html.toElement,
+         20,
+         20,
+         _p12 ? A2($FontAwesome.arrow_down,
+         $Color.white,
+         20) : A2($FontAwesome.arrow_up,$Color.white,20));
+         var $switch = A2($Graphics$Input.clickable,
+         A2($Signal.message,hideVehiclesMbx.address,{ctor: "_Tuple0"}),
+         $Graphics$Element.layers(_U.list([A2($Graphics$Element.opacity,
+                                          0.5,
+                                          A2($Graphics$Element.color,
+                                          $Color.grey,
+                                          A2($Graphics$Element.spacer,160,20)))
+                                          ,A2($Graphics$Element.beside,
+                                          A2($Graphics$Element.spacer,70,20),
+                                          icn)])));
+         var checkBoxes_ = $VehicleControl.checkBoxes(vehicleList);
+         var bck = A2($Graphics$Element.opacity,
+         0.85,
+         A2($Graphics$Element.color,
+         $Color.white,
+         A2($Graphics$Element.spacer,160,580)));
+         var vehicleStateView = $Graphics$Element.layers(_U.list([bck
+                                                                 ,A2($Graphics$Element.below,
+                                                                 A2($Graphics$Element.below,
+                                                                 A2($Graphics$Element.below,
+                                                                 A2($Graphics$Element.below,
+                                                                 A2($Graphics$Element.below,
+                                                                 A2($Graphics$Element.below,
+                                                                 A2($Graphics$Element.below,
+                                                                 A2($Graphics$Element.below,
+                                                                 A2($Graphics$Element.below,
+                                                                 A2($Graphics$Element.below,
+                                                                 mapAlpha,
+                                                                 A2($Graphics$Element.spacer,1,20)),
+                                                                 tailLength),
+                                                                 A2($Graphics$Element.spacer,1,20)),
+                                                                 traceAlpha),
+                                                                 A2($Graphics$Element.spacer,1,20)),
+                                                                 $Basics.fst(videoOptions.timeDeltaCtl)),
+                                                                 A2($Graphics$Element.spacer,1,20)),
+                                                                 $Basics.fst(videoOptions.startTimeCtl)),
+                                                                 A2($Graphics$Element.spacer,1,30)),
+                                                                 checkBoxes_)]));
+         var view = _p12 ? $switch : A2($Graphics$Element.above,
+         $switch,
+         vehicleStateView);
+         return A2($Graphics$Collage.move,
+         {ctor: "_Tuple2"
+         ,_0: 100 - $Basics.toFloat(w) / 2
+         ,_1: _p12 ? $Basics.toFloat(h) / 2 - 90 : $Basics.toFloat(h) / 2 - 380},
+         $Graphics$Collage.toForm(view));
+      }();
       var gitLink = function () {
          var b = A2($Graphics$Element.opacity,
          0.85,
@@ -19015,7 +19078,7 @@ Elm.Main.make = function (_elm) {
          return A2($Graphics$Collage.move,
          {ctor: "_Tuple2"
          ,_0: 140 - $Basics.toFloat(w) / 2
-         ,_1: $Basics.toFloat(h) / 2 - 780},
+         ,_1: 45 - $Basics.toFloat(h) / 2},
          $Graphics$Collage.toForm($Graphics$Element.layers(_U.list([b
                                                                    ,A2($Graphics$Element.below,
                                                                    A2($Graphics$Element.beside,
@@ -19044,20 +19107,20 @@ Elm.Main.make = function (_elm) {
               $Graphics$Collage.toForm(baseMap))
               ,fullTrace
               ,vehicleTrace
-              ,info
               ,title
               ,anologClock_
               ,digitClock_
               ,progressBar_
               ,vehicleStateView_
+              ,vehicleInfo
               ,gitLink]));
    });
    var mapMoveEvt = function () {
-      var check = function (_p7) {
-         var _p8 = _p7;
-         if (_p8._0) return false; else {
-               var _p9 = _p8._1;
-               if (_p9.ctor === "MoveFromTo") {
+      var check = function (_p13) {
+         var _p14 = _p13;
+         if (_p14._0) return false; else {
+               var _p15 = _p14._1;
+               if (_p15.ctor === "MoveFromTo") {
                      return true;
                   } else {
                      return false;
@@ -19151,12 +19214,13 @@ Elm.Main.make = function (_elm) {
    mapNetSg,
    $VideoControl.startTimeSg,
    $VideoControl.timeDeltaSg);
-   var main = A5($Signal.map4,
+   var main = A6($Signal.map5,
    render,
    mapNetSg,
    $VideoControl.videoOptionSg,
    dataSg,
-   $VehicleControl.vehicleOptionsSg);
+   $VehicleControl.vehicleOptionsSg,
+   hideCtlSg);
    return _elm.Main.values = {_op: _op
                              ,global_colors: global_colors
                              ,global_icons: global_icons
@@ -19164,6 +19228,9 @@ Elm.Main.make = function (_elm) {
                              ,mapMoveEvt: mapMoveEvt
                              ,mapNetSg: mapNetSg
                              ,dataSg: dataSg
+                             ,hideVehiclesMbx: hideVehiclesMbx
+                             ,hideInfoMbx: hideInfoMbx
+                             ,hideCtlSg: hideCtlSg
                              ,render: render
                              ,main: main};
 };
