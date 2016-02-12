@@ -29,9 +29,14 @@ import MapControl exposing (..)
 
 animationSg = 
     let
-        anim startTime timeDelta = animation 0 |> from startTime |> to (startTime + (toFloat timeDelta) * 3600000) |> speed 400
+        anim startTime timeDelta speedd = 
+            let
+                timeDelta_ = (toFloat timeDelta) * 3600000
+            in
+                animation 0 |> from startTime |> to (startTime + timeDelta_) 
+                    |> duration (timeDelta_ / (toFloat speedd))
     in
-        Signal.map2 anim startTimeSg timeDeltaSg
+        Signal.map3 anim startTimeSg timeDeltaSg speedSg
 
 global_t0 = Utils.timeFromString "2016-01-11T00:00:00"
 global_t1 = Utils.timeFromString "2016-01-12T00:00:00"
@@ -50,7 +55,7 @@ realClock =
             then 0
             else state
     in
-        Signal.foldp tick 0 (Signal.Extra.zip (Time.fps 25) videoOps.signal)
+        Signal.foldp tick 0 (Signal.Extra.zip (Time.fps 20) videoOps.signal)
 
 clock =
     let
@@ -137,10 +142,25 @@ timeSpanCtlSg =
                 (wrappedSlider, t)
     in
         (Signal.map f sliderSg, shadowFlow)
+
+speedCtlSg = 
+    let
+        (sliderSg, shadowFlow) = Widget.slider "timeDelta" 100 0.3 False (Signal.constant True)
+        f (slider_, pct) =
+            let
+                t = pct * 10 |> round |> (*) 10 |> Basics.max 1
+                title = Html.span [style [("padding-left", "10px"),("font-weight", "bold"),("font-size", "large")]] 
+                            [Html.text ("Play Speed: x " ++ (toString t))]|> Html.toElement 160 30
+                wrappedSlider = layers [spacer 20 1 `beside` slider_ `below` title]
+            in
+                (wrappedSlider, Basics.max 12 (10 * t))
+    in
+        (Signal.map f sliderSg, shadowFlow)
         
 startTimeSg = Signal.map (\( _, t) -> t) (fst startTimeCtlSg)
 timeDeltaSg = Signal.map (\( _, t) -> t) (fst timeSpanCtlSg)
-shadowSg = Signal.mergeMany [snd startTimeCtlSg, snd timeSpanCtlSg]
+speedSg = Signal.map (\( _, t) -> t) (fst speedCtlSg)
+shadowSg = Signal.mergeMany [snd startTimeCtlSg, snd timeSpanCtlSg, snd speedCtlSg]
 
 type alias VideoOptions =
     {
@@ -149,13 +169,14 @@ type alias VideoOptions =
         anologClock: Form,
         digitClock: Element,
         startTimeCtl: (Element, Float),
-        timeDeltaCtl: (Element, Int)
+        timeDeltaCtl: (Element, Int),
+        speedCtl: (Element, Int)
     }
 
 videoOptionSg =
     let
         videoSg_ = Signal.map5 VideoOptions clock videoControlSg analogClockSg digitalClockSg (fst startTimeCtlSg)
     in
-        Signal.map2 (\x y -> x y) videoSg_ (fst timeSpanCtlSg)
+        Signal.map3 (\x y z -> x y z) videoSg_ (fst timeSpanCtlSg) (fst speedCtlSg)
         
         
