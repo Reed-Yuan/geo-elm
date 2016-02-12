@@ -18315,24 +18315,72 @@ Elm.VideoControl.make = function (_elm) {
    $Utils = Elm.Utils.make(_elm),
    $Widget = Elm.Widget.make(_elm);
    var _op = {};
-   var VideoOptions = F6(function (a,b,c,d,e,f) {
+   var VideoOptions = F7(function (a,b,c,d,e,f,g) {
       return {time: a
              ,progressBar: b
              ,anologClock: c
              ,digitClock: d
              ,startTimeCtl: e
-             ,timeDeltaCtl: f};
+             ,timeDeltaCtl: f
+             ,speedCtl: g};
    });
+   var speedCtlSg = function () {
+      var f = function (_p0) {
+         var _p1 = _p0;
+         var t = A2($Basics.max,
+         1,
+         A2(F2(function (x,y) {    return x * y;}),
+         10,
+         $Basics.round(_p1._1 * 10)));
+         var title = A3($Html.toElement,
+         160,
+         30,
+         A2($Html.span,
+         _U.list([$Html$Attributes.style(_U.list([{ctor: "_Tuple2"
+                                                  ,_0: "padding-left"
+                                                  ,_1: "10px"}
+                                                 ,{ctor: "_Tuple2",_0: "font-weight",_1: "bold"}
+                                                 ,{ctor: "_Tuple2",_0: "font-size",_1: "large"}]))]),
+         _U.list([$Html.text(A2($Basics._op["++"],
+         "Play Speed: x ",
+         $Basics.toString(t)))])));
+         var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
+         A2($Graphics$Element.beside,
+         A2($Graphics$Element.spacer,20,1),
+         _p1._0),
+         title)]));
+         return {ctor: "_Tuple2"
+                ,_0: wrappedSlider
+                ,_1: A2($Basics.max,12,10 * t)};
+      };
+      var _p2 = A5($Widget.slider,
+      "timeDelta",
+      100,
+      0.3,
+      false,
+      $Signal.constant(true));
+      var sliderSg = _p2._0;
+      var shadowFlow = _p2._1;
+      return {ctor: "_Tuple2"
+             ,_0: A2($Signal.map,f,sliderSg)
+             ,_1: shadowFlow};
+   }();
+   var speedSg = A2($Signal.map,
+   function (_p3) {
+      var _p4 = _p3;
+      return _p4._1;
+   },
+   $Basics.fst(speedCtlSg));
    var Stop = {ctor: "Stop"};
    var Pause = {ctor: "Pause"};
    var Play = {ctor: "Play"};
    var videoOps = $Signal.mailbox(Play);
    var timeSpanCtlSg = function () {
-      var f = function (_p0) {
-         var _p1 = _p0;
+      var f = function (_p5) {
+         var _p6 = _p5;
          var t = A2(F2(function (x,y) {    return x + y;}),
          1,
-         $Basics.round(_p1._1 * 23));
+         $Basics.round(_p6._1 * 23));
          var title = A3($Html.toElement,
          160,
          30,
@@ -18350,11 +18398,11 @@ Elm.VideoControl.make = function (_elm) {
          var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
          A2($Graphics$Element.beside,
          A2($Graphics$Element.spacer,20,1),
-         _p1._0),
+         _p6._0),
          title)]));
          return {ctor: "_Tuple2",_0: wrappedSlider,_1: t};
       };
-      var _p2 = A5($Widget.slider,
+      var _p7 = A5($Widget.slider,
       "timeDelta",
       100,
       0.15,
@@ -18362,38 +18410,38 @@ Elm.VideoControl.make = function (_elm) {
       A2($Signal.map,
       F2(function (x,y) {    return _U.eq(x,y);})(Stop),
       videoOps.signal));
-      var sliderSg = _p2._0;
-      var shadowFlow = _p2._1;
+      var sliderSg = _p7._0;
+      var shadowFlow = _p7._1;
       return {ctor: "_Tuple2"
              ,_0: A2($Signal.map,f,sliderSg)
              ,_1: shadowFlow};
    }();
    var timeDeltaSg = A2($Signal.map,
-   function (_p3) {
-      var _p4 = _p3;
-      return _p4._1;
+   function (_p8) {
+      var _p9 = _p8;
+      return _p9._1;
    },
    $Basics.fst(timeSpanCtlSg));
    var realClock = function () {
-      var tick = F2(function (_p5,state) {
-         var _p6 = _p5;
-         var _p7 = _p6._1;
-         return _U.eq(_p7,Play) ? state + _p6._0 : _U.eq(_p7,
+      var tick = F2(function (_p10,state) {
+         var _p11 = _p10;
+         var _p12 = _p11._1;
+         return _U.eq(_p12,Play) ? state + _p11._0 : _U.eq(_p12,
          Stop) ? 0 : state;
       });
       return A3($Signal.foldp,
       tick,
       0,
-      A2($Signal$Extra.zip,$Time.fps(25),videoOps.signal));
+      A2($Signal$Extra.zip,$Time.fps(20),videoOps.signal));
    }();
    var global_t1 = $Utils.timeFromString("2016-01-12T00:00:00");
    var global_t0 = $Utils.timeFromString("2016-01-11T00:00:00");
    var startTimeCtlSg = function () {
-      var f = function (_p8) {
-         var _p9 = _p8;
+      var f = function (_p13) {
+         var _p14 = _p13;
          var t = A2(F2(function (x,y) {    return x + y;}),
          global_t0,
-         $Basics.toFloat($Basics.round(_p9._1 * 23) * 3600000));
+         $Basics.toFloat($Basics.round(_p14._1 * 23) * 3600000));
          var title = A3($Html.toElement,
          160,
          30,
@@ -18409,11 +18457,11 @@ Elm.VideoControl.make = function (_elm) {
          var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
          A2($Graphics$Element.beside,
          A2($Graphics$Element.spacer,20,1),
-         _p9._0),
+         _p14._0),
          title)]));
          return {ctor: "_Tuple2",_0: wrappedSlider,_1: t};
       };
-      var _p10 = A5($Widget.slider,
+      var _p15 = A5($Widget.slider,
       "startTime",
       100,
       0.25,
@@ -18421,29 +18469,31 @@ Elm.VideoControl.make = function (_elm) {
       A2($Signal.map,
       F2(function (x,y) {    return _U.eq(x,y);})(Stop),
       videoOps.signal));
-      var sliderSg = _p10._0;
-      var shadowFlow = _p10._1;
+      var sliderSg = _p15._0;
+      var shadowFlow = _p15._1;
       return {ctor: "_Tuple2"
              ,_0: A2($Signal.map,f,sliderSg)
              ,_1: shadowFlow};
    }();
    var startTimeSg = A2($Signal.map,
-   function (_p11) {
-      var _p12 = _p11;
-      return _p12._1;
+   function (_p16) {
+      var _p17 = _p16;
+      return _p17._1;
    },
    $Basics.fst(startTimeCtlSg));
    var shadowSg = $Signal.mergeMany(_U.list([$Basics.snd(startTimeCtlSg)
-                                            ,$Basics.snd(timeSpanCtlSg)]));
+                                            ,$Basics.snd(timeSpanCtlSg)
+                                            ,$Basics.snd(speedCtlSg)]));
    var animationSg = function () {
-      var anim = F2(function (startTime,timeDelta) {
-         return A2($Animation.speed,
-         400,
+      var anim = F3(function (startTime,timeDelta,speedd) {
+         var timeDelta_ = $Basics.toFloat(timeDelta) * 3600000;
+         return A2($Animation.duration,
+         timeDelta_ / $Basics.toFloat(speedd),
          A2($Animation.to,
-         startTime + $Basics.toFloat(timeDelta) * 3600000,
+         startTime + timeDelta_,
          A2($Animation.from,startTime,$Animation.animation(0))));
       });
-      return A3($Signal.map2,anim,startTimeSg,timeDeltaSg);
+      return A4($Signal.map3,anim,startTimeSg,timeDeltaSg,speedSg);
    }();
    var clock = function () {
       var virtualClock = F2(function (t,anime) {
@@ -18586,10 +18636,11 @@ Elm.VideoControl.make = function (_elm) {
       analogClockSg,
       digitalClockSg,
       $Basics.fst(startTimeCtlSg));
-      return A3($Signal.map2,
-      F2(function (x,y) {    return x(y);}),
+      return A4($Signal.map3,
+      F3(function (x,y,z) {    return A2(x,y,z);}),
       videoSg_,
-      $Basics.fst(timeSpanCtlSg));
+      $Basics.fst(timeSpanCtlSg),
+      $Basics.fst(speedCtlSg));
    }();
    var videoRewindTaskSg = A3($Signal.map2,
    F2(function (t,anime) {
@@ -18615,8 +18666,10 @@ Elm.VideoControl.make = function (_elm) {
                                      ,digitalClockSg: digitalClockSg
                                      ,startTimeCtlSg: startTimeCtlSg
                                      ,timeSpanCtlSg: timeSpanCtlSg
+                                     ,speedCtlSg: speedCtlSg
                                      ,startTimeSg: startTimeSg
                                      ,timeDeltaSg: timeDeltaSg
+                                     ,speedSg: speedSg
                                      ,shadowSg: shadowSg
                                      ,VideoOptions: VideoOptions
                                      ,videoOptionSg: videoOptionSg};
@@ -18901,12 +18954,14 @@ Elm.Main.make = function (_elm) {
    $Set = Elm.Set.make(_elm),
    $Signal = Elm.Signal.make(_elm),
    $Signal$Extra = Elm.Signal.Extra.make(_elm),
+   $String = Elm.String.make(_elm),
    $Task = Elm.Task.make(_elm),
    $Text = Elm.Text.make(_elm),
    $TileMap = Elm.TileMap.make(_elm),
    $VehicleControl = Elm.VehicleControl.make(_elm),
    $VideoControl = Elm.VideoControl.make(_elm);
    var _op = {};
+   var showWarnMbx = $Signal.mailbox(true);
    var hideInfoMbx = $Signal.mailbox({ctor: "_Tuple0"});
    var hideVehiclesMbx = $Signal.mailbox({ctor: "_Tuple0"});
    var hideCtlSg = function () {
@@ -18920,11 +18975,13 @@ Elm.Main.make = function (_elm) {
       hideVehiclesMbx.signal);
       return A2($Signal$Extra.zip,hideVehiclesSg,hideInfoSg);
    }();
-   var render = F5(function (mapp,
+   var render = F7(function (mapp,
    videoOptions,
    data,
    vehicleOptions,
-   _p2) {
+   _p2,
+   showWarn,
+   browserType) {
       var _p3 = _p2;
       var _p12 = _p3._0;
       var _p11 = _p3._1;
@@ -18964,6 +19021,46 @@ Elm.Main.make = function (_elm) {
       {ctor: "_Tuple2",_0: 0,_1: 40 - $Basics.toFloat(h) / 2},
       $Graphics$Collage.toForm(videoOptions.progressBar));
       var w = $Basics.fst(mapp.size);
+      var popA = function () {
+         var warnButton = A2($Graphics$Element.below,
+         A2($Graphics$Element.beside,
+         A2($Graphics$Element.spacer,180,1),
+         A3($Graphics$Element.size,
+         40,
+         24,
+         A2($Graphics$Input.button,
+         A2($Signal.message,showWarnMbx.address,false),
+         "OK"))),
+         A2($Graphics$Element.spacer,1,20));
+         var warn = $Graphics$Element.leftAligned(A2($Text.height,
+         20,
+         A2($Text.color,
+         $Color.yellow,
+         $Text.fromString(A2($Basics._op["++"],
+         "Your browser is ",
+         A2($Basics._op["++"],
+         browserType,
+         ", some controls in \nthis demo may not be working properly, \nplease use Google Chrome for best effects !!"))))));
+         var popp = A2($Graphics$Collage.move,
+         {ctor: "_Tuple2"
+         ,_0: 420 - $Basics.toFloat(w) / 2
+         ,_1: $Basics.toFloat(h) / 2 - 140},
+         $Graphics$Collage.toForm($Graphics$Element.layers(_U.list([A2($Graphics$Element.opacity,
+                                                                   0.5,
+                                                                   A2($Graphics$Element.color,
+                                                                   $Color.black,
+                                                                   A2($Graphics$Element.spacer,440,150)))
+                                                                   ,A2($Graphics$Element.above,
+                                                                   A2($Graphics$Element.below,
+                                                                   A2($Graphics$Element.beside,
+                                                                   A2($Graphics$Element.spacer,40,1),
+                                                                   warn),
+                                                                   A2($Graphics$Element.spacer,1,20)),
+                                                                   warnButton)]))));
+         return showWarn && $Basics.not(A2($String.startsWith,
+         "Chrome",
+         browserType)) ? popp : $Graphics$Collage.toForm($Graphics$Element.empty);
+      }();
       var anologClock_ = A2($Graphics$Collage.move,
       {ctor: "_Tuple2"
       ,_0: $Basics.toFloat(w) / 2 - 280
@@ -19032,9 +19129,11 @@ Elm.Main.make = function (_elm) {
          0.85,
          A2($Graphics$Element.color,
          $Color.white,
-         A2($Graphics$Element.spacer,160,580)));
+         A2($Graphics$Element.spacer,160,640)));
          var vehicleStateView = $Graphics$Element.layers(_U.list([bck
                                                                  ,A2($Graphics$Element.below,
+                                                                 A2($Graphics$Element.below,
+                                                                 A2($Graphics$Element.below,
                                                                  A2($Graphics$Element.below,
                                                                  A2($Graphics$Element.below,
                                                                  A2($Graphics$Element.below,
@@ -19050,6 +19149,8 @@ Elm.Main.make = function (_elm) {
                                                                  A2($Graphics$Element.spacer,1,20)),
                                                                  traceAlpha),
                                                                  A2($Graphics$Element.spacer,1,20)),
+                                                                 $Basics.fst(videoOptions.speedCtl)),
+                                                                 A2($Graphics$Element.spacer,1,20)),
                                                                  $Basics.fst(videoOptions.timeDeltaCtl)),
                                                                  A2($Graphics$Element.spacer,1,20)),
                                                                  $Basics.fst(videoOptions.startTimeCtl)),
@@ -19061,7 +19162,7 @@ Elm.Main.make = function (_elm) {
          return A2($Graphics$Collage.move,
          {ctor: "_Tuple2"
          ,_0: 100 - $Basics.toFloat(w) / 2
-         ,_1: _p12 ? $Basics.toFloat(h) / 2 - 90 : $Basics.toFloat(h) / 2 - 380},
+         ,_1: _p12 ? $Basics.toFloat(h) / 2 - 90 : $Basics.toFloat(h) / 2 - 410},
          $Graphics$Collage.toForm(view));
       }();
       var gitLink = function () {
@@ -19110,6 +19211,7 @@ Elm.Main.make = function (_elm) {
               ,title
               ,anologClock_
               ,digitClock_
+              ,popA
               ,progressBar_
               ,vehicleStateView_
               ,vehicleInfo
@@ -19152,6 +19254,12 @@ Elm.Main.make = function (_elm) {
                                ,$Color.darkGreen]);
    var runner = Elm.Native.Task.make(_elm).performSignal("runner",
    $VideoControl.videoRewindTaskSg);
+   var browserIn = Elm.Native.Port.make(_elm).inboundSignal("browserIn",
+   "String",
+   function (v) {
+      return typeof v === "string" || typeof v === "object" && v instanceof String ? v : _U.badPort("a string",
+      v);
+   });
    var screenSizeIn = Elm.Native.Port.make(_elm).inboundSignal("screenSizeIn",
    "( Int, Int )",
    function (v) {
@@ -19214,13 +19322,17 @@ Elm.Main.make = function (_elm) {
    mapNetSg,
    $VideoControl.startTimeSg,
    $VideoControl.timeDeltaSg);
-   var main = A6($Signal.map5,
+   var main = A4($Signal.map3,
+   F3(function (x,y,z) {    return A2(x,y,z);}),
+   A6($Signal.map5,
    render,
    mapNetSg,
    $VideoControl.videoOptionSg,
    dataSg,
    $VehicleControl.vehicleOptionsSg,
-   hideCtlSg);
+   hideCtlSg),
+   showWarnMbx.signal,
+   browserIn);
    return _elm.Main.values = {_op: _op
                              ,global_colors: global_colors
                              ,global_icons: global_icons
@@ -19230,6 +19342,7 @@ Elm.Main.make = function (_elm) {
                              ,dataSg: dataSg
                              ,hideVehiclesMbx: hideVehiclesMbx
                              ,hideInfoMbx: hideInfoMbx
+                             ,showWarnMbx: showWarnMbx
                              ,hideCtlSg: hideCtlSg
                              ,render: render
                              ,main: main};
