@@ -6549,6 +6549,237 @@ Elm.Time.make = function (_elm) {
                              ,delay: delay
                              ,since: since};
 };
+Elm.Easing = Elm.Easing || {};
+Elm.Easing.make = function (_elm) {
+   "use strict";
+   _elm.Easing = _elm.Easing || {};
+   if (_elm.Easing.values) return _elm.Easing.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Color = Elm.Color.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $Time = Elm.Time.make(_elm);
+   var _op = {};
+   var cycle = F3(function (animation,d,t) {
+      return A2(animation,
+      1,
+      t / d - $Basics.toFloat($Basics.floor(t / d)));
+   });
+   var flip = F2(function (easing,time) {
+      return easing(1 - time);
+   });
+   var retour = F2(function (easing,time) {
+      return _U.cmp(time,0.5) < 0 ? easing(time * 2) : A2(flip,
+      easing,
+      (time - 0.5) * 2);
+   });
+   var invert = F2(function (easing,time) {
+      return 1 - easing(1 - time);
+   });
+   var inOut = F3(function (e1,e2,time) {
+      return _U.cmp(time,
+      0.5) < 0 ? e1(time * 2) / 2 : 0.5 + e2((time - 0.5) * 2) / 2;
+   });
+   var easeInElastic = function (time) {
+      if (_U.eq(time,0.0)) return 0.0; else {
+            var t$ = time - 1;
+            var p = 0.3;
+            var s = 7.5e-2;
+            return 0 - Math.pow(2,
+            10 * t$) * $Basics.sin((t$ - s) * (2 * $Basics.pi) / p);
+         }
+   };
+   var easeOutElastic = invert(easeInElastic);
+   var easeInOutElastic = A2(inOut,easeInElastic,easeOutElastic);
+   var easeOutBounce = function (time) {
+      var t4 = time - 2.625 / 2.75;
+      var t3 = time - 2.25 / 2.75;
+      var t2 = time - 1.5 / 2.75;
+      var a = 7.5625;
+      return _U.cmp(time,
+      1 / 2.75) < 0 ? a * time * time : _U.cmp(time,
+      2 / 2.75) < 0 ? a * t2 * t2 + 0.75 : _U.cmp(time,
+      2.5 / 2.75) < 0 ? a * t3 * t3 + 0.9375 : a * t4 * t4 + 0.984375;
+   };
+   var easeInBounce = invert(easeOutBounce);
+   var easeInOutBounce = A2(inOut,easeInBounce,easeOutBounce);
+   var easeInBack = function (time) {
+      return time * time * (2.70158 * time - 1.70158);
+   };
+   var easeOutBack = invert(easeInBack);
+   var easeInOutBack = A2(inOut,easeInBack,easeOutBack);
+   var easeOutCirc = function (time) {
+      return $Basics.sqrt(1 - Math.pow(time - 1,2));
+   };
+   var easeInCirc = invert(easeOutCirc);
+   var easeInOutCirc = A2(inOut,easeInCirc,easeOutCirc);
+   var easeInExpo = function (time) {
+      return _U.eq(time,0.0) ? 0.0 : Math.pow(2,10 * (time - 1));
+   };
+   var easeOutExpo = invert(easeInExpo);
+   var easeInOutExpo = A2(inOut,easeInExpo,easeOutExpo);
+   var easeOutSine = function (time) {
+      return $Basics.sin(time * ($Basics.pi / 2));
+   };
+   var easeInSine = invert(easeOutSine);
+   var easeInOutSine = A2(inOut,easeInSine,easeOutSine);
+   var easeInQuint = function (time) {
+      return Math.pow(time,5);
+   };
+   var easeOutQuint = invert(easeInQuint);
+   var easeInOutQuint = A2(inOut,easeInQuint,easeOutQuint);
+   var easeInQuart = function (time) {
+      return Math.pow(time,4);
+   };
+   var easeOutQuart = invert(easeInQuart);
+   var easeInOutQuart = A2(inOut,easeInQuart,easeOutQuart);
+   var easeInCubic = function (time) {
+      return Math.pow(time,3);
+   };
+   var easeOutCubic = invert(easeInCubic);
+   var easeInOutCubic = A2(inOut,easeInCubic,easeOutCubic);
+   var easeInQuad = function (time) {    return Math.pow(time,2);};
+   var easeOutQuad = invert(easeInQuad);
+   var easeInOutQuad = A2(inOut,easeInQuad,easeOutQuad);
+   var linear = $Basics.identity;
+   var pair = F4(function (interpolate,_p1,_p0,v) {
+      var _p2 = _p1;
+      var _p3 = _p0;
+      return {ctor: "_Tuple2"
+             ,_0: A3(interpolate,_p2._0,_p3._0,v)
+             ,_1: A3(interpolate,_p2._1,_p3._1,v)};
+   });
+   var $float = F3(function (from,to,v) {
+      return from + (to - from) * v;
+   });
+   var point2d = F3(function (from,to,v) {
+      return {x: A3($float,from.x,to.x,v)
+             ,y: A3($float,from.y,to.y,v)};
+   });
+   var point3d = F3(function (from,to,v) {
+      return {x: A3($float,from.x,to.x,v)
+             ,y: A3($float,from.y,to.y,v)
+             ,z: A3($float,from.z,to.z,v)};
+   });
+   var color = F3(function (from,to,v) {
+      var float$ = F3(function (from,to,v) {
+         return $Basics.round(A3($float,
+         $Basics.toFloat(from),
+         $Basics.toFloat(to),
+         v));
+      });
+      var _p4 = {ctor: "_Tuple2"
+                ,_0: $Color.toRgb(from)
+                ,_1: $Color.toRgb(to)};
+      var rgb1 = _p4._0;
+      var rgb2 = _p4._1;
+      var _p5 = {ctor: "_Tuple4"
+                ,_0: rgb1.red
+                ,_1: rgb1.green
+                ,_2: rgb1.blue
+                ,_3: rgb1.alpha};
+      var r1 = _p5._0;
+      var g1 = _p5._1;
+      var b1 = _p5._2;
+      var a1 = _p5._3;
+      var _p6 = {ctor: "_Tuple4"
+                ,_0: rgb2.red
+                ,_1: rgb2.green
+                ,_2: rgb2.blue
+                ,_3: rgb2.alpha};
+      var r2 = _p6._0;
+      var g2 = _p6._1;
+      var b2 = _p6._2;
+      var a2 = _p6._3;
+      return A4($Color.rgba,
+      A3(float$,r1,r2,v),
+      A3(float$,g1,g2,v),
+      A3(float$,b1,b2,v),
+      A3($float,a1,a2,v));
+   });
+   var bezier = F5(function (x1,y1,x2,y2,time) {
+      var casteljau = function (ps) {
+         casteljau: while (true) {
+            var _p7 = ps;
+            if (_p7.ctor === "::" && _p7._0.ctor === "_Tuple2" && _p7._1.ctor === "[]")
+            {
+                  return _p7._0._1;
+               } else {
+                  var _p8 = _p7;
+                  var _v3 = A3($List.map2,
+                  F2(function (x,y) {    return A4(pair,$float,x,y,time);}),
+                  _p8,
+                  A2($Maybe.withDefault,_U.list([]),$List.tail(_p8)));
+                  ps = _v3;
+                  continue casteljau;
+               }
+         }
+      };
+      return casteljau(_U.list([{ctor: "_Tuple2",_0: 0,_1: 0}
+                               ,{ctor: "_Tuple2",_0: x1,_1: y1}
+                               ,{ctor: "_Tuple2",_0: x2,_1: y2}
+                               ,{ctor: "_Tuple2",_0: 1,_1: 1}]));
+   });
+   var ease = F6(function (easing,
+   interpolation,
+   from,
+   to,
+   duration,
+   time) {
+      return A3(interpolation,
+      from,
+      to,
+      easing(A2($Basics.min,time / duration,1)));
+   });
+   return _elm.Easing.values = {_op: _op
+                               ,ease: ease
+                               ,$float: $float
+                               ,point2d: point2d
+                               ,point3d: point3d
+                               ,color: color
+                               ,pair: pair
+                               ,cycle: cycle
+                               ,invert: invert
+                               ,retour: retour
+                               ,inOut: inOut
+                               ,flip: flip
+                               ,bezier: bezier
+                               ,linear: linear
+                               ,easeInQuad: easeInQuad
+                               ,easeOutQuad: easeOutQuad
+                               ,easeInOutQuad: easeInOutQuad
+                               ,easeInCubic: easeInCubic
+                               ,easeOutCubic: easeOutCubic
+                               ,easeInOutCubic: easeInOutCubic
+                               ,easeInQuart: easeInQuart
+                               ,easeOutQuart: easeOutQuart
+                               ,easeInOutQuart: easeInOutQuart
+                               ,easeInQuint: easeInQuint
+                               ,easeOutQuint: easeOutQuint
+                               ,easeInOutQuint: easeInOutQuint
+                               ,easeInSine: easeInSine
+                               ,easeOutSine: easeOutSine
+                               ,easeInOutSine: easeInOutSine
+                               ,easeInExpo: easeInExpo
+                               ,easeOutExpo: easeOutExpo
+                               ,easeInOutExpo: easeInOutExpo
+                               ,easeInCirc: easeInCirc
+                               ,easeOutCirc: easeOutCirc
+                               ,easeInOutCirc: easeInOutCirc
+                               ,easeInBack: easeInBack
+                               ,easeOutBack: easeOutBack
+                               ,easeInOutBack: easeInOutBack
+                               ,easeInBounce: easeInBounce
+                               ,easeOutBounce: easeOutBounce
+                               ,easeInOutBounce: easeInOutBounce
+                               ,easeInElastic: easeInElastic
+                               ,easeOutElastic: easeOutElastic
+                               ,easeInOutElastic: easeInOutElastic};
+};
 Elm.Native.Array = {};
 Elm.Native.Array.make = function(localRuntime) {
 
@@ -17998,7 +18229,7 @@ Elm.Data.make = function (_elm) {
                      var inTimeRange = function (g) {
                         return _U.cmp(g.timestamp,
                         startTime) > -1 && _U.cmp(g.timestamp,
-                        startTime + $Basics.toFloat(timeDelta) * 3600000) < 0;
+                        startTime + timeDelta * 3600000) < 0;
                      };
                      var sortedGps = A2($List.sortBy,
                      function (_) {
@@ -18296,8 +18527,10 @@ Elm.VideoControl.make = function (_elm) {
    var _U = Elm.Native.Utils.make(_elm),
    $Animation = Elm.Animation.make(_elm),
    $Basics = Elm.Basics.make(_elm),
+   $Bitwise = Elm.Bitwise.make(_elm),
    $Color = Elm.Color.make(_elm),
    $Debug = Elm.Debug.make(_elm),
+   $Easing = Elm.Easing.make(_elm),
    $FontAwesome = Elm.FontAwesome.make(_elm),
    $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
    $Graphics$Element = Elm.Graphics.Element.make(_elm),
@@ -18327,11 +18560,11 @@ Elm.VideoControl.make = function (_elm) {
    var speedCtlSg = function () {
       var f = function (_p0) {
          var _p1 = _p0;
-         var t = A2($Basics.max,
+         var t = A2($Bitwise.shiftLeft,
          1,
-         A2(F2(function (x,y) {    return x * y;}),
-         10,
-         $Basics.round(_p1._1 * 10)));
+         A2(F2(function (x,y) {    return x + y;}),
+         3,
+         $Basics.round(_p1._1 * 8)));
          var title = A3($Html.toElement,
          160,
          30,
@@ -18349,14 +18582,12 @@ Elm.VideoControl.make = function (_elm) {
          A2($Graphics$Element.spacer,20,1),
          _p1._0),
          title)]));
-         return {ctor: "_Tuple2"
-                ,_0: wrappedSlider
-                ,_1: A2($Basics.max,12,10 * t)};
+         return {ctor: "_Tuple2",_0: wrappedSlider,_1: t};
       };
       var _p2 = A5($Widget.slider,
       "timeDelta",
       100,
-      0.3,
+      0.6,
       false,
       $Signal.constant(true));
       var sliderSg = _p2._0;
@@ -18368,7 +18599,7 @@ Elm.VideoControl.make = function (_elm) {
    var speedSg = A2($Signal.map,
    function (_p3) {
       var _p4 = _p3;
-      return _p4._1;
+      return $Basics.toFloat(_p4._1);
    },
    $Basics.fst(speedCtlSg));
    var Stop = {ctor: "Stop"};
@@ -18419,7 +18650,7 @@ Elm.VideoControl.make = function (_elm) {
    var timeDeltaSg = A2($Signal.map,
    function (_p8) {
       var _p9 = _p8;
-      return _p9._1;
+      return $Basics.toFloat(_p9._1);
    },
    $Basics.fst(timeSpanCtlSg));
    var realClock = function () {
@@ -18481,29 +18712,124 @@ Elm.VideoControl.make = function (_elm) {
       return _p17._1;
    },
    $Basics.fst(startTimeCtlSg));
-   var shadowSg = $Signal.mergeMany(_U.list([$Basics.snd(startTimeCtlSg)
-                                            ,$Basics.snd(timeSpanCtlSg)
-                                            ,$Basics.snd(speedCtlSg)]));
-   var animationSg = function () {
-      var anim = F3(function (startTime,timeDelta,speedd) {
-         var timeDelta_ = $Basics.toFloat(timeDelta) * 3600000;
-         return A2($Animation.duration,
-         timeDelta_ / $Basics.toFloat(speedd),
-         A2($Animation.to,
-         startTime + timeDelta_,
-         A2($Animation.from,startTime,$Animation.animation(0))));
-      });
-      return A4($Signal.map3,anim,startTimeSg,timeDeltaSg,speedSg);
-   }();
    var clock = function () {
-      var virtualClock = F2(function (t,anime) {
-         return A2($Animation.animate,t,anime);
-      });
-      return A3($Signal.map2,virtualClock,realClock,animationSg);
+      var tick = function () {
+         var step = F2(function (_p19,_p18) {
+            var _p20 = _p19;
+            var _p29 = _p20._3;
+            var _p28 = _p20._2;
+            var _p27 = _p20._1;
+            var _p26 = _p20._0;
+            var _p21 = _p18;
+            var _p25 = _p21._3;
+            var _p24 = _p21._0;
+            var _p23 = _p21._2;
+            var _p22 = _p21._1;
+            var clockTag = _U.eq(_p26,0) || !_U.eq(_p27,_p25) ? _p26 : _p23;
+            var progress = _U.eq(_p26,0) || _U.eq(_p24,
+            0) ? _p28 : A2($Animation.animate,_p26 - _p23,_p22);
+            var anime = _U.eq(_p26,0) || _U.eq(_p24,0) ? A2($Animation.ease,
+            $Easing.linear,
+            A2($Animation.speed,
+            _p27,
+            A2($Animation.to,
+            _p28 + 3600000 * _p29,
+            A2($Animation.from,
+            _p28,
+            $Animation.animation(0))))) : _U.eq(_p27,
+            _p25) ? _p22 : A2($Animation.ease,
+            $Easing.linear,
+            A2($Animation.speed,
+            _p27,
+            A2($Animation.to,
+            _p28 + 3600000 * _p29,
+            A2($Animation.from,progress,$Animation.animation(0)))));
+            return {ctor: "_Tuple4"
+                   ,_0: progress
+                   ,_1: anime
+                   ,_2: clockTag
+                   ,_3: _p27};
+         });
+         return A3($Signal.foldp,
+         step,
+         {ctor: "_Tuple4",_0: 0,_1: $Animation.animation(0),_2: 0,_3: 0},
+         A4($Signal$Extra.zip4,
+         realClock,
+         speedSg,
+         startTimeSg,
+         timeDeltaSg));
+      }();
+      return A2($Signal.map,
+      function (_p30) {
+         var _p31 = _p30;
+         return _p31._0;
+      },
+      tick);
    }();
+   var analogClockSg = function () {
+      var analogClock = function (t) {
+         var hand_hh = A2($Graphics$Collage.traced,
+         _U.update($Graphics$Collage.defaultLine,
+         {width: 8,color: $Color.blue}),
+         A2($Graphics$Collage.segment,
+         {ctor: "_Tuple2",_0: 0,_1: 0},
+         $Basics.fromPolar({ctor: "_Tuple2"
+                           ,_0: 35
+                           ,_1: $Basics.degrees(90 - 6 * $Time.inSeconds(t) / 720)})));
+         var hand_mm = A2($Graphics$Collage.traced,
+         _U.update($Graphics$Collage.defaultLine,
+         {width: 5,color: $Color.green}),
+         A2($Graphics$Collage.segment,
+         {ctor: "_Tuple2",_0: 0,_1: 0},
+         $Basics.fromPolar({ctor: "_Tuple2"
+                           ,_0: 50
+                           ,_1: $Basics.degrees(90 - 6 * $Time.inSeconds(t) / 60)})));
+         var outline_ = A2($Graphics$Collage.outlined,
+         _U.update($Graphics$Collage.defaultLine,
+         {width: 4,color: $Color.orange}),
+         $Graphics$Collage.circle(60));
+         var face = A2($Graphics$Collage.alpha,
+         0.6,
+         A2($Graphics$Collage.filled,
+         $Color.lightGrey,
+         $Graphics$Collage.circle(60)));
+         return $Graphics$Collage.group(_U.list([face
+                                                ,outline_
+                                                ,hand_mm
+                                                ,hand_hh]));
+      };
+      return A2($Signal.map,analogClock,clock);
+   }();
+   var digitalClockSg = function () {
+      var digitalClock = function (t) {
+         var dTxt = $Graphics$Element.leftAligned(A2($Text.color,
+         $Color.green,
+         $Text.bold(A2($Text.height,
+         35,
+         $Text.fromString($Utils.timeToString(t))))));
+         return $Graphics$Element.layers(_U.list([A2($Graphics$Element.opacity,
+                                                 0.85,
+                                                 A2($Graphics$Element.color,
+                                                 $Color.white,
+                                                 A2($Graphics$Element.spacer,160,40)))
+                                                 ,A2($Graphics$Element.beside,
+                                                 A2($Graphics$Element.spacer,15,1),
+                                                 dTxt)]));
+      };
+      return A2($Signal.map,digitalClock,clock);
+   }();
+   var videoRewindTaskSg = A4($Signal.map3,
+   F3(function (t1,t2,td) {
+      return _U.cmp(t1,t2 + 3600000 * td) > -1 ? A2($Signal.send,
+      videoOps.address,
+      Stop) : $Task.succeed({ctor: "_Tuple0"});
+   }),
+   clock,
+   startTimeSg,
+   timeDeltaSg);
    var videoControlSg = function () {
       var drawProgress = F3(function (t,t0,td) {
-         var p = (t - t0) / ($Basics.toFloat(td) * 3600000) * 400;
+         var p = (t - t0) / (td * 3600000) * 400;
          var progress = A2($Graphics$Collage.moveX,
          -210,
          A2($Graphics$Collage.traced,
@@ -18576,58 +18902,9 @@ Elm.VideoControl.make = function (_elm) {
       startTimeSg,
       timeDeltaSg);
    }();
-   var analogClockSg = function () {
-      var analogClock = function (t) {
-         var hand_hh = A2($Graphics$Collage.traced,
-         _U.update($Graphics$Collage.defaultLine,
-         {width: 8,color: $Color.blue}),
-         A2($Graphics$Collage.segment,
-         {ctor: "_Tuple2",_0: 0,_1: 0},
-         $Basics.fromPolar({ctor: "_Tuple2"
-                           ,_0: 35
-                           ,_1: $Basics.degrees(90 - 6 * $Time.inSeconds(t) / 720)})));
-         var hand_mm = A2($Graphics$Collage.traced,
-         _U.update($Graphics$Collage.defaultLine,
-         {width: 5,color: $Color.green}),
-         A2($Graphics$Collage.segment,
-         {ctor: "_Tuple2",_0: 0,_1: 0},
-         $Basics.fromPolar({ctor: "_Tuple2"
-                           ,_0: 50
-                           ,_1: $Basics.degrees(90 - 6 * $Time.inSeconds(t) / 60)})));
-         var outline_ = A2($Graphics$Collage.outlined,
-         _U.update($Graphics$Collage.defaultLine,
-         {width: 4,color: $Color.orange}),
-         $Graphics$Collage.circle(60));
-         var face = A2($Graphics$Collage.alpha,
-         0.6,
-         A2($Graphics$Collage.filled,
-         $Color.lightGrey,
-         $Graphics$Collage.circle(60)));
-         return $Graphics$Collage.group(_U.list([face
-                                                ,outline_
-                                                ,hand_mm
-                                                ,hand_hh]));
-      };
-      return A2($Signal.map,analogClock,clock);
-   }();
-   var digitalClockSg = function () {
-      var digitalClock = function (t) {
-         var dTxt = $Graphics$Element.leftAligned(A2($Text.color,
-         $Color.green,
-         $Text.bold(A2($Text.height,
-         35,
-         $Text.fromString($Utils.timeToString(t))))));
-         return $Graphics$Element.layers(_U.list([A2($Graphics$Element.opacity,
-                                                 0.85,
-                                                 A2($Graphics$Element.color,
-                                                 $Color.white,
-                                                 A2($Graphics$Element.spacer,160,40)))
-                                                 ,A2($Graphics$Element.beside,
-                                                 A2($Graphics$Element.spacer,15,1),
-                                                 dTxt)]));
-      };
-      return A2($Signal.map,digitalClock,clock);
-   }();
+   var shadowSg = $Signal.mergeMany(_U.list([$Basics.snd(startTimeCtlSg)
+                                            ,$Basics.snd(timeSpanCtlSg)
+                                            ,$Basics.snd(speedCtlSg)]));
    var videoOptionSg = function () {
       var videoSg_ = A6($Signal.map5,
       VideoOptions,
@@ -18642,16 +18919,7 @@ Elm.VideoControl.make = function (_elm) {
       $Basics.fst(timeSpanCtlSg),
       $Basics.fst(speedCtlSg));
    }();
-   var videoRewindTaskSg = A3($Signal.map2,
-   F2(function (t,anime) {
-      return A2($Animation.isDone,t,anime) ? A2($Signal.send,
-      videoOps.address,
-      Stop) : $Task.succeed({ctor: "_Tuple0"});
-   }),
-   realClock,
-   animationSg);
    return _elm.VideoControl.values = {_op: _op
-                                     ,animationSg: animationSg
                                      ,global_t0: global_t0
                                      ,global_t1: global_t1
                                      ,Play: Play
@@ -19162,7 +19430,7 @@ Elm.Main.make = function (_elm) {
          return A2($Graphics$Collage.move,
          {ctor: "_Tuple2"
          ,_0: 100 - $Basics.toFloat(w) / 2
-         ,_1: _p12 ? $Basics.toFloat(h) / 2 - 90 : $Basics.toFloat(h) / 2 - 410},
+         ,_1: _p12 ? 360 : 40},
          $Graphics$Collage.toForm(view));
       }();
       var gitLink = function () {

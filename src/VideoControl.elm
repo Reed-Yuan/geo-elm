@@ -23,20 +23,11 @@ import Exts.Float
 import Mouse
 import Task
 import Signal
+import Easing
+import Bitwise
 
 import Widget
 import MapControl exposing (..)
-
-animationSg = 
-    let
-        anim startTime timeDelta speedd = 
-            let
-                timeDelta_ = (toFloat timeDelta) * 3600000
-            in
-                animation 0 |> from startTime |> to (startTime + timeDelta_) 
-                    |> duration (timeDelta_ / (toFloat speedd))
-    in
-        Signal.map3 anim startTimeSg timeDeltaSg speedSg
 
 global_t0 = Utils.timeFromString "2016-01-11T00:00:00"
 global_t1 = Utils.timeFromString "2016-01-12T00:00:00"
@@ -48,22 +39,42 @@ videoOps = Signal.mailbox Play
         
 realClock = 
     let
-        tick (tDelta, videoStatus) state = 
-            if videoStatus == Play
+        tick (tDelta, videoStatus) state =  
+            (if videoStatus == Play
             then state + tDelta
             else if videoStatus == Stop
             then 0
-            else state
+            else state) 
     in
         Signal.foldp tick 0 (Signal.Extra.zip (Time.fps 20) videoOps.signal)
-
-clock =
-    let
-        virtualClock t anime = animate t anime
-    in
-        Signal.map2 virtualClock realClock animationSg
         
-videoRewindTaskSg = Signal.map2 (\t anime -> if isDone t anime then Signal.send videoOps.address Stop else Task.succeed ()) realClock animationSg
+clock = 
+    let
+        tick =
+            let
+                step (clk, speedd, st0, td0) (progress_, animation_, clockTag_, speed_) = 
+                    let
+                        progress = if clk == 0 || progress_ == 0 then st0 else animate (clk - clockTag_) animation_
+
+                        anime =
+                            if clk == 0 || progress_ == 0
+                            then animation 0 |> from st0 |> to (st0 + 3600000 * td0) |> speed speedd |> ease Easing.linear
+                            else if speedd == speed_
+                            then animation_
+                            else animation 0 |> from progress |> to (st0 + 3600000 * td0) |> speed speedd |> ease Easing.linear
+                        
+                        clockTag = 
+                            if clk == 0 || speedd /= speed_
+                            then clk 
+                            else clockTag_
+                    in
+                        (progress, anime, clockTag, speedd)
+            in
+                Signal.foldp step (0, animation 0, 0, 0) (Signal.Extra.zip4 realClock speedSg startTimeSg timeDeltaSg)
+    in
+        tick |> Signal.map (\(x, y, z, w) -> x)
+
+videoRewindTaskSg = Signal.map3 (\t1 t2 td -> if t1 >= t2 + 3600000 * td then Signal.send videoOps.address Stop else Task.succeed ()) clock startTimeSg timeDeltaSg
         
 videoControlSg =
     let
@@ -82,7 +93,7 @@ videoControlSg =
         drawProgress  t t0 td =
             let
                 darkBar = segment (0,0) (400, 0) |> traced { defaultLine | width = 10, color = darkGrey } |> moveX -210
-                p = (t - t0) / (toFloat td * 3600000) * 400 
+                p = (t - t0) / (td * 3600000) * 400 
                 progress = segment (0,0) (p, 0) |> traced { defaultLine | width = 10, color = red } |> moveX -210
             in
                 collage 440 10 [darkBar, progress]
@@ -145,21 +156,21 @@ timeSpanCtlSg =
 
 speedCtlSg = 
     let
-        (sliderSg, shadowFlow) = Widget.slider "timeDelta" 100 0.3 False (Signal.constant True)
+        (sliderSg, shadowFlow) = Widget.slider "timeDelta" 100 0.6 False (Signal.constant True)
         f (slider_, pct) =
             let
-                t = pct * 10 |> round |> (*) 10 |> Basics.max 1
+                t = pct * 8 |> round |> (+) 3 |> (Bitwise.shiftLeft) 1
                 title = Html.span [style [("padding-left", "10px"),("font-weight", "bold"),("font-size", "large")]] 
                             [Html.text ("Play Speed: x " ++ (toString t))]|> Html.toElement 160 30
                 wrappedSlider = layers [spacer 20 1 `beside` slider_ `below` title]
             in
-                (wrappedSlider, Basics.max 12 (10 * t))
+                (wrappedSlider, t)
     in
         (Signal.map f sliderSg, shadowFlow)
         
 startTimeSg = Signal.map (\( _, t) -> t) (fst startTimeCtlSg)
-timeDeltaSg = Signal.map (\( _, t) -> t) (fst timeSpanCtlSg)
-speedSg = Signal.map (\( _, t) -> t) (fst speedCtlSg)
+timeDeltaSg = Signal.map (\( _, t) -> toFloat t) (fst timeSpanCtlSg)
+speedSg = Signal.map (\( _, t) -> toFloat t) (fst speedCtlSg)
 shadowSg = Signal.mergeMany [snd startTimeCtlSg, snd timeSpanCtlSg, snd speedCtlSg]
 
 type alias VideoOptions =

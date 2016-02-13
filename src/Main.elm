@@ -136,7 +136,7 @@ render  mapp videoOptions data vehicleOptions (hideVehicles, hideInfo) showWarn 
                              |> Graphics.Input.clickable (Signal.message hideVehiclesMbx.address ())
                 view = (if hideVehicles then switch else switch `above` vehicleStateView)
             in 
-                view |> toForm |> move (100 - (toFloat w)/2, if hideVehicles then (toFloat h)/2 - 90 else (toFloat h)/2 - 410)
+                view |> toForm |> move (100 - (toFloat w)/2, if hideVehicles then 360 else 40)
                 
         gitLink =
                 let
