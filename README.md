@@ -3,7 +3,7 @@ Demo of GPS visualization with ELM programming language: http://elm-lang.org/
 
 Demo site: http://geo-elm.bitballoon.com/ (Currently only works with Chrome)
 
-3 minutes demo on Youtube: https://www.youtube.com/watch?v=mZO7e7hfPSI
+3 minutes demo on Youtube: https://www.youtube.com/watch?v=Y9Aj7IAtgtE
 
 This is a prove-of-concept project to see how Functional Reactive Programming (FRP) could be introduced to GIS world and improve user experience with interactive UI and smooth animation.
 
