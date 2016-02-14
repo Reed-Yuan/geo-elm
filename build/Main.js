@@ -18408,7 +18408,8 @@ Elm.Widget.make = function (_elm) {
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
-   $Signal = Elm.Signal.make(_elm);
+   $Signal = Elm.Signal.make(_elm),
+   $Signal$Extra = Elm.Signal.Extra.make(_elm);
    var _op = {};
    var slider = F5(function (name,
    width,
@@ -18416,14 +18417,33 @@ Elm.Widget.make = function (_elm) {
    isVertical,
    enabledSg) {
       var hoverFlow = $Signal.mailbox(false);
-      var filteredMouseEvt = A2($Drag.track,false,hoverFlow.signal);
+      var check = function (_p0) {
+         var _p1 = _p0;
+         if ($Basics.not(_p1._0)) return false; else {
+               var _p2 = _p1._1;
+               if (_p2.ctor === "Just" && _p2._0.ctor === "MoveBy" && _p2._0._0.ctor === "_Tuple2")
+               {
+                     return true;
+                  } else {
+                     return false;
+                  }
+            }
+      };
+      var filteredMouseEvt = A2($Signal.map,
+      $Basics.snd,
+      A3($Signal.filter,
+      check,
+      {ctor: "_Tuple2",_0: false,_1: $Maybe.Nothing},
+      A2($Signal$Extra.zip,
+      enabledSg,
+      A2($Drag.track,false,hoverFlow.signal))));
       var sliderOps = function () {
          var merge = F2(function (msEvt,enabled) {
             if (enabled) {
-                  var _p0 = msEvt;
-                  if (_p0.ctor === "Just" && _p0._0.ctor === "MoveBy" && _p0._0._0.ctor === "_Tuple2")
+                  var _p3 = msEvt;
+                  if (_p3.ctor === "Just" && _p3._0.ctor === "MoveBy" && _p3._0._0.ctor === "_Tuple2")
                   {
-                        return isVertical ? _p0._0._0._1 : _p0._0._0._0;
+                        return isVertical ? _p3._0._0._1 : _p3._0._0._0;
                      } else {
                         return 0;
                      }
@@ -18579,18 +18599,29 @@ Elm.VideoControl.make = function (_elm) {
       return $Basics.toFloat(_p4._1);
    },
    $Basics.fst(speedCtlSg));
+   var check = function (m) {
+      var _p5 = m;
+      if (_p5.ctor === "Just") {
+            return true;
+         } else {
+            return false;
+         }
+   };
    var forwardFlow = $Signal.mailbox(false);
-   var filteredMouseEvt = A2($Drag.track,false,forwardFlow.signal);
+   var filteredMouseEvt = A3($Signal.filter,
+   check,
+   $Maybe.Nothing,
+   A2($Drag.track,false,forwardFlow.signal));
    var Stop = {ctor: "Stop"};
    var Pause = {ctor: "Pause"};
    var Play = {ctor: "Play"};
    var videoOps = $Signal.mailbox(Play);
    var timeSpanCtlSg = function () {
-      var f = function (_p5) {
-         var _p6 = _p5;
+      var f = function (_p6) {
+         var _p7 = _p6;
          var t = A2(F2(function (x,y) {    return x + y;}),
          1,
-         $Basics.round(_p6._1 * 23));
+         $Basics.round(_p7._1 * 23));
          var title = A3($Html.toElement,
          160,
          30,
@@ -18608,11 +18639,11 @@ Elm.VideoControl.make = function (_elm) {
          var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
          A2($Graphics$Element.beside,
          A2($Graphics$Element.spacer,20,1),
-         _p6._0),
+         _p7._0),
          title)]));
          return {ctor: "_Tuple2",_0: wrappedSlider,_1: t};
       };
-      var _p7 = A5($Widget.slider,
+      var _p8 = A5($Widget.slider,
       "timeDelta",
       100,
       0.15,
@@ -18620,23 +18651,23 @@ Elm.VideoControl.make = function (_elm) {
       A2($Signal.map,
       F2(function (x,y) {    return _U.eq(x,y);})(Stop),
       videoOps.signal));
-      var sliderSg = _p7._0;
-      var shadowFlow = _p7._1;
+      var sliderSg = _p8._0;
+      var shadowFlow = _p8._1;
       return {ctor: "_Tuple2"
              ,_0: A2($Signal.map,f,sliderSg)
              ,_1: shadowFlow};
    }();
    var timeDeltaSg = A2($Signal.map,
-   function (_p8) {
-      var _p9 = _p8;
-      return $Basics.toFloat(_p9._1);
+   function (_p9) {
+      var _p10 = _p9;
+      return $Basics.toFloat(_p10._1);
    },
    $Basics.fst(timeSpanCtlSg));
    var realClock = function () {
-      var tick = F2(function (_p10,state) {
-         var _p11 = _p10;
-         var _p12 = _p11._1;
-         return _U.eq(_p12,Play) ? state + _p11._0 : _U.eq(_p12,
+      var tick = F2(function (_p11,state) {
+         var _p12 = _p11;
+         var _p13 = _p12._1;
+         return _U.eq(_p13,Play) ? state + _p12._0 : _U.eq(_p13,
          Stop) ? 0 : state;
       });
       return A3($Signal.foldp,
@@ -18647,11 +18678,11 @@ Elm.VideoControl.make = function (_elm) {
    var global_t1 = $Utils.timeFromString("2016-01-12T00:00:00");
    var global_t0 = $Utils.timeFromString("2016-01-11T00:00:00");
    var startTimeCtlSg = function () {
-      var f = function (_p13) {
-         var _p14 = _p13;
+      var f = function (_p14) {
+         var _p15 = _p14;
          var t = A2(F2(function (x,y) {    return x + y;}),
          global_t0,
-         $Basics.toFloat($Basics.round(_p14._1 * 23) * 3600000));
+         $Basics.toFloat($Basics.round(_p15._1 * 23) * 3600000));
          var title = A3($Html.toElement,
          160,
          30,
@@ -18667,11 +18698,11 @@ Elm.VideoControl.make = function (_elm) {
          var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
          A2($Graphics$Element.beside,
          A2($Graphics$Element.spacer,20,1),
-         _p14._0),
+         _p15._0),
          title)]));
          return {ctor: "_Tuple2",_0: wrappedSlider,_1: t};
       };
-      var _p15 = A5($Widget.slider,
+      var _p16 = A5($Widget.slider,
       "startTime",
       100,
       0.25,
@@ -18679,74 +18710,74 @@ Elm.VideoControl.make = function (_elm) {
       A2($Signal.map,
       F2(function (x,y) {    return _U.eq(x,y);})(Stop),
       videoOps.signal));
-      var sliderSg = _p15._0;
-      var shadowFlow = _p15._1;
+      var sliderSg = _p16._0;
+      var shadowFlow = _p16._1;
       return {ctor: "_Tuple2"
              ,_0: A2($Signal.map,f,sliderSg)
              ,_1: shadowFlow};
    }();
    var startTimeSg = A2($Signal.map,
-   function (_p16) {
-      var _p17 = _p16;
-      return _p17._1;
+   function (_p17) {
+      var _p18 = _p17;
+      return _p18._1;
    },
    $Basics.fst(startTimeCtlSg));
    var clock = function () {
       var tick = function () {
-         var step = F2(function (_p19,_p18) {
-            var _p20 = _p19;
-            var _p33 = _p20._3;
-            var _p32 = _p20._2;
-            var _p31 = _p20._1;
-            var _p30 = _p20._4;
-            var _p29 = _p20._0;
-            var _p21 = _p18;
-            var _p28 = _p21._3;
-            var _p27 = _p21._0;
-            var _p26 = _p21._2;
-            var _p25 = _p21._1;
+         var step = F2(function (_p20,_p19) {
+            var _p21 = _p20;
+            var _p34 = _p21._3;
+            var _p33 = _p21._2;
+            var _p32 = _p21._1;
+            var _p31 = _p21._4;
+            var _p30 = _p21._0;
+            var _p22 = _p19;
+            var _p29 = _p22._3;
+            var _p28 = _p22._0;
+            var _p27 = _p22._2;
+            var _p26 = _p22._1;
             var clockTag = function () {
-               var _p22 = _p30;
-               if (_p22.ctor === "Just") {
-                     return _p29;
+               var _p23 = _p31;
+               if (_p23.ctor === "Just") {
+                     return _p30;
                   } else {
-                     return _U.eq(_p29,0) || !_U.eq(_p31,_p28) ? _p29 : _p26;
+                     return _U.eq(_p30,0) || !_U.eq(_p32,_p29) ? _p30 : _p27;
                   }
             }();
             var progress = function () {
-               var _p23 = _p30;
-               if (_p23.ctor === "Just" && _p23._0.ctor === "MoveBy" && _p23._0._0.ctor === "_Tuple2")
+               var _p24 = _p31;
+               if (_p24.ctor === "Just" && _p24._0.ctor === "MoveBy" && _p24._0._0.ctor === "_Tuple2")
                {
                      return A2($Basics.min,
-                     _p32 + 3600000 * _p33,
+                     _p33 + 3600000 * _p34,
                      A2($Basics.max,
-                     _p27 + $Basics.toFloat(_p23._0._0._0) / 800 * _p33 * 3600000,
-                     _p32));
+                     _p28 + $Basics.toFloat(_p24._0._0._0) / 800 * _p34 * 3600000,
+                     _p33));
                   } else {
-                     return _U.eq(_p29,0) || _U.eq(_p27,
-                     0) ? _p32 : A2($Animation.animate,_p29 - _p26,_p25);
+                     return _U.eq(_p30,0) || _U.eq(_p28,
+                     0) ? _p33 : A2($Animation.animate,_p30 - _p27,_p26);
                   }
             }();
             var anime = function () {
-               var _p24 = _p30;
-               if (_p24.ctor === "Just") {
-                     return A2($Animation.from,progress,_p25);
+               var _p25 = _p31;
+               if (_p25.ctor === "Just") {
+                     return A2($Animation.from,progress,_p26);
                   } else {
-                     return _U.eq(_p29,0) || _U.eq(_p27,0) ? A2($Animation.speed,
-                     _p31,
+                     return _U.eq(_p30,0) || _U.eq(_p28,0) ? A2($Animation.speed,
+                     _p32,
                      A2($Animation.to,
-                     _p32 + 3600000 * _p33,
-                     A2($Animation.from,_p32,_p25))) : _U.eq(_p31,
-                     _p28) ? _p25 : A2($Animation.speed,
-                     _p31,
-                     A2($Animation.from,progress,_p25));
+                     _p33 + 3600000 * _p34,
+                     A2($Animation.from,_p33,_p26))) : _U.eq(_p32,
+                     _p29) ? _p26 : A2($Animation.speed,
+                     _p32,
+                     A2($Animation.from,progress,_p26));
                   }
             }();
             return {ctor: "_Tuple4"
                    ,_0: progress
                    ,_1: anime
                    ,_2: clockTag
-                   ,_3: _p31};
+                   ,_3: _p32};
          });
          return A3($Signal.foldp,
          step,
@@ -18763,9 +18794,9 @@ Elm.VideoControl.make = function (_elm) {
          filteredMouseEvt));
       }();
       return A2($Signal.map,
-      function (_p34) {
-         var _p35 = _p34;
-         return _p35._0;
+      function (_p35) {
+         var _p36 = _p35;
+         return _p36._0;
       },
       tick);
    }();
@@ -18940,6 +18971,7 @@ Elm.VideoControl.make = function (_elm) {
                                      ,clock: clock
                                      ,videoRewindTaskSg: videoRewindTaskSg
                                      ,forwardFlow: forwardFlow
+                                     ,check: check
                                      ,filteredMouseEvt: filteredMouseEvt
                                      ,videoControlSg: videoControlSg
                                      ,analogClockSg: analogClockSg

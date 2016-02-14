@@ -90,7 +90,13 @@ videoRewindTaskSg = Signal.map3 (\t1 t2 td -> if t1 >= t2 + 3600000 * td then Si
 
 forwardFlow: Signal.Mailbox Bool
 forwardFlow = Signal.mailbox False
-filteredMouseEvt = Drag.track False forwardFlow.signal
+
+check m = 
+    case m of
+       Just _ -> True
+       _ -> False
+
+filteredMouseEvt = Drag.track False forwardFlow.signal |> Signal.filter check Nothing
 
 videoControlSg =
     let

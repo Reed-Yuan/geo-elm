@@ -26,7 +26,15 @@ slider name width initValue isVertical enabledSg =
         rPos = width - knotWidthHalf
         initPosition = ((initValue * (toFloat (width - knotWidth))) |> round) + knotWidthHalf
         
-        filteredMouseEvt = Drag.track False hoverFlow.signal
+        check (e, m) = 
+            if not e then False
+            else
+                case m of
+                   Just (MoveBy (_, _)) -> True
+                   _ -> False
+                    
+        filteredMouseEvt = Drag.track False hoverFlow.signal |> Signal.Extra.zip enabledSg 
+                            |> Signal.filter check (False, Nothing) |> Signal.map snd
         
         sliderOps : Signal Int
         sliderOps = 
