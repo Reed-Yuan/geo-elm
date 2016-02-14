@@ -19125,7 +19125,7 @@ Elm.VehicleControl.make = function (_elm) {
                                                  ,{ctor: "_Tuple2",_0: "font-weight",_1: "bold"}
                                                  ,{ctor: "_Tuple2",_0: "font-size",_1: "large"}]))]),
          _U.list([$Html.text(A2($Basics._op["++"],
-         "Map Alpha: ",
+         "Map Fade: ",
          $Basics.toString(pct_)))])));
          var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
          A2($Graphics$Element.beside,
@@ -19160,7 +19160,7 @@ Elm.VehicleControl.make = function (_elm) {
                                                  ,{ctor: "_Tuple2",_0: "font-weight",_1: "bold"}
                                                  ,{ctor: "_Tuple2",_0: "font-size",_1: "large"}]))]),
          _U.list([$Html.text(A2($Basics._op["++"],
-         "Trace Alpha: ",
+         "Trace Fade: ",
          $Basics.toString(pct_)))])));
          var wrappedSlider = $Graphics$Element.layers(_U.list([A2($Graphics$Element.below,
          A2($Graphics$Element.beside,
