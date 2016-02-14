@@ -1,7 +1,7 @@
 # geo-elm
 Demo of GPS visualization with ELM programming language: http://elm-lang.org/
 
-Demo site: http://geo-elm.bitballoon.com/ (Currently only works with Chrome)
+Demo site: http://geo-elm.bitballoon.com/
 
 3 minutes demo on Youtube: https://www.youtube.com/watch?v=Y9Aj7IAtgtE
 
