@@ -26,28 +26,22 @@ slider name width initValue isVertical enabledSg =
         rPos = width - knotWidthHalf
         initPosition = ((initValue * (toFloat (width - knotWidth))) |> round) + knotWidthHalf
         
-        check (s, m, e) = 
-            if not (s && e) then False
-            else
-                case m of
-                    MoveFromTo _ _ -> True
-                    _ -> False
-                    
-        filteredMouseEvt = Signal.Extra.zip3 hoverFlow.signal Drag.mouseEvents enabledSg 
-                            |> Signal.filter check (False, StartAt (0,0), False) |> Signal.map (\(_, x, _) -> x)
+        filteredMouseEvt = Drag.track False hoverFlow.signal
         
         sliderOps : Signal Int
         sliderOps = 
             let
-                merge msEvt =
-                    case msEvt of
-                        MoveFromTo (x0,y0) (x1, y1) ->
-                            if isVertical
-                            then (y0 - y1)
-                            else (x1 - x0)
-                        _ -> 0
+                merge msEvt enabled =
+                    if enabled then
+                        case msEvt of
+                            Just (MoveBy (dx, dy)) ->
+                                if isVertical
+                                then dy
+                                else dx
+                            _ -> 0
+                    else 0
             in
-                Signal.map merge filteredMouseEvt
+                Signal.map2 merge filteredMouseEvt enabledSg
         
         step a acc = (a + acc) |> Basics.min rPos |> Basics.max lPos
         posSignal = Signal.foldp step initPosition sliderOps

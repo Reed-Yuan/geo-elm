@@ -25,6 +25,7 @@ import Task
 import Signal
 import Easing
 import Bitwise
+import Drag exposing (..)
 
 import Widget
 import MapControl exposing (..)
@@ -52,30 +53,45 @@ clock =
     let
         tick =
             let
-                step (clk, speedd, st0, td0) (progress_, animation_, clockTag_, speed_) = 
+                step (clk, speedd, st0, td0, msEvt) (progress_, animation_, clockTag_, speed_) = 
                     let
-                        progress = if clk == 0 || progress_ == 0 then st0 else animate (clk - clockTag_) animation_
+                        progress = 
+                            case msEvt of
+                                Just (MoveBy (dx, _)) -> 
+                                    Basics.max (progress_ + (toFloat dx) / 400 * td0 * 3600000) st0
+                                    |> Basics.min (st0 + 3600000 * td0)
+                                _ -> if clk == 0 || progress_ == 0 then st0 else animate (clk - clockTag_) animation_
 
                         anime =
-                            if clk == 0 || progress_ == 0
-                            then animation 0 |> from st0 |> to (st0 + 3600000 * td0) |> speed speedd |> ease Easing.linear
-                            else if speedd == speed_
-                            then animation_
-                            else animation 0 |> from progress |> to (st0 + 3600000 * td0) |> speed speedd |> ease Easing.linear
+                           case msEvt of
+                               Just _ -> animation_ |> from progress
+                               _ -> (if clk == 0 || progress_ == 0
+                                    then animation_ |> from st0 |> to (st0 + 3600000 * td0) |> speed speedd
+                                    else if speedd == speed_
+                                    then animation_
+                                    else animation_ |> from progress |> speed speedd )
+                                    
                         
                         clockTag = 
-                            if clk == 0 || speedd /= speed_
-                            then clk 
-                            else clockTag_
+                            case msEvt of
+                                Just _ -> clk
+                                _ -> (if clk == 0 || speedd /= speed_
+                                     then clk 
+                                     else clockTag_)
+                                
                     in
                         (progress, anime, clockTag, speedd)
             in
-                Signal.foldp step (0, animation 0, 0, 0) (Signal.Extra.zip4 realClock speedSg startTimeSg timeDeltaSg)
+                Signal.foldp step (0, animation 0 |> ease Easing.linear, 0, 0 ) (Utils.zip5 realClock speedSg startTimeSg timeDeltaSg filteredMouseEvt)
     in
         tick |> Signal.map (\(x, y, z, w) -> x)
 
 videoRewindTaskSg = Signal.map3 (\t1 t2 td -> if t1 >= t2 + 3600000 * td then Signal.send videoOps.address Stop else Task.succeed ()) clock startTimeSg timeDeltaSg
-        
+
+forwardFlow: Signal.Mailbox Bool
+forwardFlow = Signal.mailbox False
+filteredMouseEvt = Drag.track False forwardFlow.signal
+
 videoControlSg =
     let
         wth = 580
@@ -96,10 +112,11 @@ videoControlSg =
                 p = (t - t0) / (td * 3600000) * 400 
                 progress = segment (0,0) (p, 0) |> traced { defaultLine | width = 10, color = red } |> moveX -210
             in
-                collage 440 10 [darkBar, progress]
+                collage 440 10 [darkBar, progress] |> container 440 30 (topLeftAt (absolute 0) (absolute 10))
+                    |> Graphics.Input.hoverable (Signal.message forwardFlow.address)
                 
         drawCtlAndPrgs videoStatus t t0 td = layers [spacer wth 30 |> color white |> opacity 0.85 
-                       , spacer 40 10 `beside` (drawControls videoStatus) `beside` spacer 10 10 `beside` ((drawProgress t t0 td) `below` spacer 1 10)]        
+                       , spacer 40 10 `beside` (drawControls videoStatus) `beside` spacer 10 10 `beside` (drawProgress t t0 td)]        
     in 
         Signal.map4 drawCtlAndPrgs videoOps.signal clock startTimeSg timeDeltaSg
 
@@ -171,7 +188,7 @@ speedCtlSg =
 startTimeSg = Signal.map (\( _, t) -> t) (fst startTimeCtlSg)
 timeDeltaSg = Signal.map (\( _, t) -> toFloat t) (fst timeSpanCtlSg)
 speedSg = Signal.map (\( _, t) -> toFloat t) (fst speedCtlSg)
-shadowSg = Signal.mergeMany [snd startTimeCtlSg, snd timeSpanCtlSg, snd speedCtlSg]
+shadowSg = Signal.mergeMany [snd startTimeCtlSg, snd timeSpanCtlSg, snd speedCtlSg, forwardFlow.signal]
 
 type alias VideoOptions =
     {
