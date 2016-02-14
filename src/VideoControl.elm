@@ -58,7 +58,7 @@ clock =
                         progress = 
                             case msEvt of
                                 Just (MoveBy (dx, _)) -> 
-                                    Basics.max (progress_ + (toFloat dx) / 400 * td0 * 3600000) st0
+                                    Basics.max (progress_ + ((toFloat dx) / 800) * td0 * 3600000) st0
                                     |> Basics.min (st0 + 3600000 * td0)
                                 _ -> if clk == 0 || progress_ == 0 then st0 else animate (clk - clockTag_) animation_
 

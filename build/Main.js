@@ -18720,7 +18720,7 @@ Elm.VideoControl.make = function (_elm) {
                      return A2($Basics.min,
                      _p32 + 3600000 * _p33,
                      A2($Basics.max,
-                     _p27 + $Basics.toFloat(_p23._0._0._0) / 400 * _p33 * 3600000,
+                     _p27 + $Basics.toFloat(_p23._0._0._0) / 800 * _p33 * 3600000,
                      _p32));
                   } else {
                      return _U.eq(_p29,0) || _U.eq(_p27,
