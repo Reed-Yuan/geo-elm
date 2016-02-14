@@ -30,7 +30,7 @@ traceAlphaSg =
             let
                 pct_ = Exts.Float.roundTo 2 pct
                 title = Html.span [style [("padding-left", "10px"),("font-weight", "bold"),("font-size", "large")]] 
-                        [Html.text ("Trace Alpha: " ++ (toString pct_))] |> Html.toElement 160 30
+                        [Html.text ("Trace Fade: " ++ (toString pct_))] |> Html.toElement 160 30
                 wrappedSlider = layers [spacer 20 1 `beside` slider_ `below` title]
             in
                 (wrappedSlider, pct_)
@@ -44,7 +44,7 @@ mapAlphaSg =
             let
                 pct_ = Exts.Float.roundTo 2 pct
                 title = Html.span [style [("padding-left", "10px"),("font-weight", "bold"),("font-size", "large")]] 
-                        [Html.text ("Map Alpha: " ++ (toString pct_))] |> Html.toElement 160 30
+                        [Html.text ("Map Fade: " ++ (toString pct_))] |> Html.toElement 160 30
                 wrappedSlider = layers [spacer 20 1 `beside` slider_ `below` title]
             in
                 (wrappedSlider, pct_)
