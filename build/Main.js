@@ -18419,10 +18419,9 @@ Elm.Widget.make = function (_elm) {
       var hoverFlow = $Signal.mailbox(false);
       var check = function (_p0) {
          var _p1 = _p0;
-         if ($Basics.not(_p1._0)) return false; else {
+         if ($Basics.not(_p1._0 && _p1._2)) return false; else {
                var _p2 = _p1._1;
-               if (_p2.ctor === "Just" && _p2._0.ctor === "MoveBy" && _p2._0._0.ctor === "_Tuple2")
-               {
+               if (_p2.ctor === "MoveFromTo") {
                      return true;
                   } else {
                      return false;
@@ -18430,19 +18429,26 @@ Elm.Widget.make = function (_elm) {
             }
       };
       var filteredMouseEvt = A2($Signal.map,
-      $Basics.snd,
+      function (_p3) {
+         var _p4 = _p3;
+         return _p4._1;
+      },
       A3($Signal.filter,
       check,
-      {ctor: "_Tuple2",_0: false,_1: $Maybe.Nothing},
-      A2($Signal$Extra.zip,
-      enabledSg,
-      A2($Drag.track,false,hoverFlow.signal))));
+      {ctor: "_Tuple3"
+      ,_0: false
+      ,_1: $Drag.StartAt({ctor: "_Tuple2",_0: 0,_1: 0})
+      ,_2: false},
+      A3($Signal$Extra.zip3,
+      hoverFlow.signal,
+      $Drag.mouseEvents,
+      enabledSg)));
       var sliderOps = function () {
          var merge = function (msEvt) {
-            var _p3 = msEvt;
-            if (_p3.ctor === "Just" && _p3._0.ctor === "MoveBy" && _p3._0._0.ctor === "_Tuple2")
+            var _p5 = msEvt;
+            if (_p5.ctor === "MoveFromTo" && _p5._0.ctor === "_Tuple2" && _p5._1.ctor === "_Tuple2")
             {
-                  return isVertical ? _p3._0._0._1 : _p3._0._0._0;
+                  return isVertical ? _p5._0._1 - _p5._1._1 : _p5._1._0 - _p5._0._0;
                } else {
                   return 0;
                }
@@ -18462,50 +18468,69 @@ Elm.Widget.make = function (_elm) {
       var posSignal = A3($Signal.foldp,step,initPosition,sliderOps);
       var knotHeight = 20;
       var knotHeightHalf = A2($Bitwise.shiftRight,knotHeight,1);
-      var bar = isVertical ? A4($Graphics$Element.container,
-      knotHeight,
-      width,
-      A2($Graphics$Element.midTopAt,
-      $Graphics$Element.absolute(knotHeightHalf),
-      $Graphics$Element.absolute(0)),
-      A2($Graphics$Element.color,
-      $Color.darkGrey,
-      A2($Graphics$Element.spacer,
-      barHeight,
-      width))) : A4($Graphics$Element.container,
-      width,
-      knotHeight,
-      A2($Graphics$Element.midLeftAt,
-      $Graphics$Element.absolute(0),
-      $Graphics$Element.absolute(knotHeightHalf)),
-      A2($Graphics$Element.color,
-      $Color.darkGrey,
-      A2($Graphics$Element.spacer,width,barHeight)));
-      var slideRect = isVertical ? A2($Graphics$Element.spacer,
-      knotHeight,
-      width) : A2($Graphics$Element.spacer,width,knotHeight);
-      var render = F2(function (x,enabled) {
-         var pct = $Basics.toFloat(x - knotWidthHalf) / $Basics.toFloat(width - knotWidth);
-         var colorr = enabled ? $Color.red : $Color.darkGrey;
-         var knot = (isVertical ? A3($Graphics$Element.container,
+      var vertView = F2(function (pos,colorr) {
+         var slideRect = A2($Graphics$Element.spacer,
+         knotHeight + 10,
+         width + 20);
+         var knot = A4($Graphics$Element.container,
          20,
          width,
          A2($Graphics$Element.middleAt,
          $Graphics$Element.absolute(knotHeightHalf),
-         $Graphics$Element.absolute(width - x))) : A3($Graphics$Element.container,
+         $Graphics$Element.absolute(width - pos)),
+         A2($Graphics$Element.color,
+         colorr,
+         A2($Graphics$Element.spacer,20,10)));
+         var bar = A4($Graphics$Element.container,
+         knotHeight,
+         width,
+         A2($Graphics$Element.midTopAt,
+         $Graphics$Element.absolute(knotHeightHalf),
+         $Graphics$Element.absolute(0)),
+         A2($Graphics$Element.color,
+         $Color.darkGrey,
+         A2($Graphics$Element.spacer,barHeight,width)));
+         return $Graphics$Element.layers(_U.list([bar,knot,slideRect]));
+      });
+      var horizView = F2(function (pos,colorr) {
+         var slideRect = A2($Graphics$Element.spacer,
+         width + 20,
+         knotHeight + 10);
+         var knot = A4($Graphics$Element.container,
          width,
          20,
          A2($Graphics$Element.middleAt,
-         $Graphics$Element.absolute(x),
-         $Graphics$Element.absolute(knotHeightHalf))))(A2($Graphics$Element.color,
+         $Graphics$Element.absolute(pos),
+         $Graphics$Element.absolute(knotHeightHalf)),
+         A2($Graphics$Element.color,
          colorr,
-         isVertical ? A2($Graphics$Element.spacer,
-         20,
-         10) : A2($Graphics$Element.spacer,10,20)));
-         var knotAndBar = A2($Graphics$Input.hoverable,
+         A2($Graphics$Element.spacer,10,20)));
+         var bar = A4($Graphics$Element.container,
+         width,
+         knotHeight,
+         A2($Graphics$Element.midLeftAt,
+         $Graphics$Element.absolute(0),
+         $Graphics$Element.absolute(knotHeightHalf)),
+         A2($Graphics$Element.color,
+         $Color.darkGrey,
+         A2($Graphics$Element.spacer,width,barHeight)));
+         return A4($Graphics$Element.container,
+         width + 20,
+         knotHeight + 10,
+         A2($Graphics$Element.topLeftAt,
+         $Graphics$Element.absolute(10),
+         $Graphics$Element.absolute(5)),
+         $Graphics$Element.layers(_U.list([bar,knot])));
+      });
+      var render = F2(function (x,enabled) {
+         var pct = $Basics.toFloat(x - knotWidthHalf) / $Basics.toFloat(width - knotWidth);
+         var colorr = enabled ? $Color.red : $Color.darkGrey;
+         var view = isVertical ? A2(vertView,
+         x,
+         colorr) : A2($Graphics$Input.hoverable,
          $Signal.message(hoverFlow.address),
-         $Graphics$Element.layers(_U.list([bar,knot,slideRect])));
-         return {ctor: "_Tuple2",_0: knotAndBar,_1: pct};
+         A2(horizView,x,colorr));
+         return {ctor: "_Tuple2",_0: view,_1: pct};
       });
       return {ctor: "_Tuple2"
              ,_0: A3($Signal.map2,render,posSignal,enabledSg)
@@ -19456,17 +19481,17 @@ Elm.Main.make = function (_elm) {
                                                                  A2($Graphics$Element.below,
                                                                  A2($Graphics$Element.below,
                                                                  mapAlpha,
-                                                                 A2($Graphics$Element.spacer,1,20)),
+                                                                 A2($Graphics$Element.spacer,1,10)),
                                                                  tailLength),
-                                                                 A2($Graphics$Element.spacer,1,20)),
+                                                                 A2($Graphics$Element.spacer,1,10)),
                                                                  traceAlpha),
-                                                                 A2($Graphics$Element.spacer,1,20)),
+                                                                 A2($Graphics$Element.spacer,1,10)),
                                                                  $Basics.fst(videoOptions.speedCtl)),
-                                                                 A2($Graphics$Element.spacer,1,20)),
+                                                                 A2($Graphics$Element.spacer,1,10)),
                                                                  $Basics.fst(videoOptions.timeDeltaCtl)),
-                                                                 A2($Graphics$Element.spacer,1,20)),
+                                                                 A2($Graphics$Element.spacer,1,10)),
                                                                  $Basics.fst(videoOptions.startTimeCtl)),
-                                                                 A2($Graphics$Element.spacer,1,30)),
+                                                                 A2($Graphics$Element.spacer,1,20)),
                                                                  checkBoxes_)]));
          var view = _p12 ? $switch : A2($Graphics$Element.above,
          $switch,
