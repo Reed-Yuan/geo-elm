@@ -64,7 +64,7 @@ clock =
 
                         anime =
                            case msEvt of
-                               Just _ -> animation_ |> from progress
+                               Just (MoveBy (dx, _)) -> animation_ |> from progress
                                _ -> (if clk == 0 || progress_ == 0
                                     then animation_ |> from st0 |> to (st0 + 3600000 * td0) |> speed speedd
                                     else if speedd == speed_
@@ -74,7 +74,7 @@ clock =
                         
                         clockTag = 
                             case msEvt of
-                                Just _ -> clk
+                                Just (MoveBy (dx, _)) -> clk
                                 _ -> (if clk == 0 || speedd /= speed_
                                      then clk 
                                      else clockTag_)

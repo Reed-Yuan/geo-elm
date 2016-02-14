@@ -18738,7 +18738,8 @@ Elm.VideoControl.make = function (_elm) {
             var _p26 = _p22._1;
             var clockTag = function () {
                var _p23 = _p31;
-               if (_p23.ctor === "Just") {
+               if (_p23.ctor === "Just" && _p23._0.ctor === "MoveBy" && _p23._0._0.ctor === "_Tuple2")
+               {
                      return _p30;
                   } else {
                      return _U.eq(_p30,0) || !_U.eq(_p32,_p29) ? _p30 : _p27;
@@ -18760,7 +18761,8 @@ Elm.VideoControl.make = function (_elm) {
             }();
             var anime = function () {
                var _p25 = _p31;
-               if (_p25.ctor === "Just") {
+               if (_p25.ctor === "Just" && _p25._0.ctor === "MoveBy" && _p25._0._0.ctor === "_Tuple2")
+               {
                      return A2($Animation.from,progress,_p26);
                   } else {
                      return _U.eq(_p30,0) || _U.eq(_p28,0) ? A2($Animation.speed,
