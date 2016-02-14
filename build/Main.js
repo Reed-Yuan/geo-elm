@@ -18438,18 +18438,16 @@ Elm.Widget.make = function (_elm) {
       enabledSg,
       A2($Drag.track,false,hoverFlow.signal))));
       var sliderOps = function () {
-         var merge = F2(function (msEvt,enabled) {
-            if (enabled) {
-                  var _p3 = msEvt;
-                  if (_p3.ctor === "Just" && _p3._0.ctor === "MoveBy" && _p3._0._0.ctor === "_Tuple2")
-                  {
-                        return isVertical ? _p3._0._0._1 : _p3._0._0._0;
-                     } else {
-                        return 0;
-                     }
-               } else return 0;
-         });
-         return A3($Signal.map2,merge,filteredMouseEvt,enabledSg);
+         var merge = function (msEvt) {
+            var _p3 = msEvt;
+            if (_p3.ctor === "Just" && _p3._0.ctor === "MoveBy" && _p3._0._0.ctor === "_Tuple2")
+            {
+                  return isVertical ? _p3._0._0._1 : _p3._0._0._0;
+               } else {
+                  return 0;
+               }
+         };
+         return A2($Signal.map,merge,filteredMouseEvt);
       }();
       var widthHalf = A2($Bitwise.shiftRight,width,1);
       var barHeight = 6;

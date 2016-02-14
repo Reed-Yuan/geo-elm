@@ -39,17 +39,15 @@ slider name width initValue isVertical enabledSg =
         sliderOps : Signal Int
         sliderOps = 
             let
-                merge msEvt enabled =
-                    if enabled then
-                        case msEvt of
-                            Just (MoveBy (dx, dy)) ->
-                                if isVertical
-                                then dy
-                                else dx
-                            _ -> 0
-                    else 0
+                merge msEvt =
+                    case msEvt of
+                        Just (MoveBy (dx, dy)) ->
+                            if isVertical
+                            then dy
+                            else dx
+                        _ -> 0
             in
-                Signal.map2 merge filteredMouseEvt enabledSg
+                Signal.map merge filteredMouseEvt
         
         step a acc = (a + acc) |> Basics.min rPos |> Basics.max lPos
         posSignal = Signal.foldp step initPosition sliderOps
