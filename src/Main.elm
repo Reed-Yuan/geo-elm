@@ -124,12 +124,12 @@ render  mapp videoOptions data vehicleOptions (hideVehicles, hideInfo) showWarn 
                 bck = spacer 160 640 |> color white |> opacity 0.85
                 checkBoxes_ = checkBoxes vehicleList
                 vehicleStateView = layers [bck, 
-                                    mapAlpha `below` (spacer 1 20) 
-                                    `below` tailLength `below` (spacer 1 20) 
-                                    `below` traceAlpha `below` (spacer 1 20)
-                                    `below` (fst videoOptions.speedCtl) `below` (spacer 1 20)
-                                    `below` (fst videoOptions.timeDeltaCtl) `below` (spacer 1 20)
-                                    `below` (fst videoOptions.startTimeCtl) `below` (spacer 1 30)
+                                    mapAlpha `below` (spacer 1 10) 
+                                    `below` tailLength `below` (spacer 1 10) 
+                                    `below` traceAlpha `below` (spacer 1 10)
+                                    `below` (fst videoOptions.speedCtl) `below` (spacer 1 10)
+                                    `below` (fst videoOptions.timeDeltaCtl) `below` (spacer 1 10)
+                                    `below` (fst videoOptions.startTimeCtl) `below` (spacer 1 20)
                                     `below` checkBoxes_]
                 icn = (if hideVehicles then FontAwesome.arrow_down white 20 else FontAwesome.arrow_up white 20) |> Html.toElement 20 20
                 switch = layers [spacer 160 20 |> color grey |> Graphics.Element.opacity 0.5, spacer 70 20 `beside` icn]  
