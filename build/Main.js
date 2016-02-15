@@ -18334,21 +18334,27 @@ Elm.MapControl.make = function (_elm) {
    var Size = function (a) {    return {ctor: "Size",_0: a};};
    var Pan = function (a) {    return {ctor: "Pan",_0: a};};
    var Zoom = function (a) {    return {ctor: "Zoom",_0: a};};
-   var ops = F3(function (mouseWheelIn,
+   var ops = F4(function (mouseWheelIn,
    screenSizeIn,
-   filteredMouseEvt) {
-      var mouseDrag = function (evt) {
-         var _p1 = evt;
-         if (_p1.ctor === "MoveFromTo" && _p1._0.ctor === "_Tuple2" && _p1._1.ctor === "_Tuple2")
-         {
-               return Pan({ctor: "_Tuple2"
-                          ,_0: _p1._1._0 - _p1._0._0
-                          ,_1: _p1._1._1 - _p1._0._1});
-            } else {
-               return NoOp;
+   mouseEvt,
+   shadowSg) {
+      var mouseDrag = F2(function (evt,shadowed) {
+         if (shadowed) return NoOp; else {
+               var _p1 = evt;
+               if (_p1.ctor === "MoveFromTo" && _p1._0.ctor === "_Tuple2" && _p1._1.ctor === "_Tuple2")
+               {
+                     return Pan({ctor: "_Tuple2"
+                                ,_0: _p1._1._0 - _p1._0._0
+                                ,_1: _p1._1._1 - _p1._0._1});
+                  } else {
+                     return NoOp;
+                  }
             }
-      };
-      var pan = A2($Signal.map,mouseDrag,filteredMouseEvt);
+      });
+      var pan = $Signal.dropRepeats(A3($Signal.map2,
+      mouseDrag,
+      mouseEvt,
+      shadowSg));
       var sizing = A2($Signal$Extra._op["<~"],
       function (_p2) {
          var _p3 = _p2;
@@ -18365,9 +18371,10 @@ Elm.MapControl.make = function (_elm) {
       mouseWheelIn);
       return $Signal.mergeMany(_U.list([zooms,sizing,pan]));
    });
-   var mapSg = F3(function (mouseWheelIn,
+   var mapSg = F4(function (mouseWheelIn,
    screenSizeIn,
-   filteredMouseEvt) {
+   mouseEvt,
+   shadowSg) {
       var initMap = {size: {ctor: "_Tuple2"
                            ,_0: $TileMap.tileSize
                            ,_1: $TileMap.tileSize}
@@ -18376,7 +18383,7 @@ Elm.MapControl.make = function (_elm) {
       return A3($Signal.foldp,
       trans,
       initMap,
-      A3(ops,mouseWheelIn,screenSizeIn,filteredMouseEvt));
+      A4(ops,mouseWheelIn,screenSizeIn,mouseEvt,shadowSg));
    });
    var MouseWheel = F2(function (a,b) {
       return {pos: a,delta: b};
@@ -18408,8 +18415,7 @@ Elm.Widget.make = function (_elm) {
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
-   $Signal = Elm.Signal.make(_elm),
-   $Signal$Extra = Elm.Signal.Extra.make(_elm);
+   $Signal = Elm.Signal.make(_elm);
    var _op = {};
    var slider = F5(function (name,
    width,
@@ -18417,43 +18423,26 @@ Elm.Widget.make = function (_elm) {
    isVertical,
    enabledSg) {
       var hoverFlow = $Signal.mailbox(false);
-      var check = function (_p0) {
-         var _p1 = _p0;
-         if ($Basics.not(_p1._0 && _p1._2)) return false; else {
-               var _p2 = _p1._1;
-               if (_p2.ctor === "MoveFromTo") {
-                     return true;
-                  } else {
-                     return false;
-                  }
-            }
-      };
-      var filteredMouseEvt = A2($Signal.map,
-      function (_p3) {
-         var _p4 = _p3;
-         return _p4._1;
-      },
-      A3($Signal.filter,
-      check,
-      {ctor: "_Tuple3"
-      ,_0: false
-      ,_1: $Drag.StartAt({ctor: "_Tuple2",_0: 0,_1: 0})
-      ,_2: false},
-      A3($Signal$Extra.zip3,
-      hoverFlow.signal,
-      $Drag.mouseEvents,
-      enabledSg)));
       var sliderOps = function () {
-         var merge = function (msEvt) {
-            var _p5 = msEvt;
-            if (_p5.ctor === "MoveFromTo" && _p5._0.ctor === "_Tuple2" && _p5._1.ctor === "_Tuple2")
-            {
-                  return isVertical ? _p5._0._1 - _p5._1._1 : _p5._1._0 - _p5._0._0;
-               } else {
-                  return 0;
+         var op = F3(function (enabled,inside,msEvt) {
+            if ($Basics.not(enabled && inside)) return 0; else {
+                  var _p0 = msEvt;
+                  if (_p0.ctor === "MoveFromTo" && _p0._0.ctor === "_Tuple2" && _p0._1.ctor === "_Tuple2")
+                  {
+                        return isVertical ? _p0._0._1 - _p0._1._1 : _p0._1._0 - _p0._0._0;
+                     } else {
+                        return 0;
+                     }
                }
-         };
-         return A2($Signal.map,merge,filteredMouseEvt);
+         });
+         return A3($Signal.filter,
+         F2(function (x,y) {    return !_U.eq(x,y);})(0),
+         0,
+         A4($Signal.map3,
+         op,
+         enabledSg,
+         hoverFlow.signal,
+         $Drag.mouseEvents));
       }();
       var widthHalf = A2($Bitwise.shiftRight,width,1);
       var barHeight = 6;
@@ -18465,7 +18454,10 @@ Elm.Widget.make = function (_elm) {
          return A2($Basics.max,lPos,A2($Basics.min,rPos,a + acc));
       });
       var initPosition = $Basics.round(initValue * $Basics.toFloat(width - knotWidth)) + knotWidthHalf;
-      var posSignal = A3($Signal.foldp,step,initPosition,sliderOps);
+      var posSignal = $Signal.dropRepeats(A3($Signal.foldp,
+      step,
+      initPosition,
+      sliderOps));
       var knotHeight = 20;
       var knotHeightHalf = A2($Bitwise.shiftRight,knotHeight,1);
       var slideRect = A2($Graphics$Input.hoverable,
@@ -18630,10 +18622,7 @@ Elm.VideoControl.make = function (_elm) {
          }
    };
    var forwardFlow = $Signal.mailbox(false);
-   var filteredMouseEvt = A3($Signal.filter,
-   check,
-   $Maybe.Nothing,
-   A2($Drag.track,false,forwardFlow.signal));
+   var filteredMouseEvt = A2($Drag.track,false,forwardFlow.signal);
    var Stop = {ctor: "Stop"};
    var Pause = {ctor: "Pause"};
    var Play = {ctor: "Play"};
@@ -19553,30 +19542,8 @@ Elm.Main.make = function (_elm) {
               ,vehicleInfo
               ,gitLink]));
    });
-   var mapMoveEvt = function () {
-      var check = function (_p13) {
-         var _p14 = _p13;
-         if (_p14._0) return false; else {
-               var _p15 = _p14._1;
-               if (_p15.ctor === "MoveFromTo") {
-                     return true;
-                  } else {
-                     return false;
-                  }
-            }
-      };
-      var mergedShadow = $Signal.mergeMany(_U.list([$VehicleControl.shadowSg
-                                                   ,$VideoControl.shadowSg]));
-      var filteredMouseEvt = A2($Signal.map,
-      $Basics.snd,
-      A3($Signal.filter,
-      check,
-      {ctor: "_Tuple2"
-      ,_0: false
-      ,_1: $Drag.StartAt({ctor: "_Tuple2",_0: 0,_1: 0})},
-      A2($Signal$Extra.zip,mergedShadow,$Drag.mouseEvents)));
-      return filteredMouseEvt;
-   }();
+   var mergedShadow = $Signal.dropRepeats($Signal.mergeMany(_U.list([$VehicleControl.shadowSg
+                                                                    ,$VideoControl.shadowSg])));
    var shadowFlow = $Signal.mailbox(false);
    var global_icons = _U.list([$FontAwesome.truck
                               ,$FontAwesome.ambulance
@@ -19619,10 +19586,11 @@ Elm.Main.make = function (_elm) {
                                                                    v.delta)} : _U.badPort("an object with fields `pos`, `delta`",
       v);
    });
-   var mapNetSg = A3($MapControl.mapSg,
+   var mapNetSg = A4($MapControl.mapSg,
    mouseWheelIn,
    screenSizeIn,
-   mapMoveEvt);
+   $Drag.mouseEvents,
+   mergedShadow);
    var vehicleIn = Elm.Native.Port.make(_elm).inboundSignal("vehicleIn",
    "List\n    (\n    List\n        ( Int\n        , String\n        , Float\n        , Float\n        , Float\n        , Float\n        )\n    )",
    function (v) {
@@ -19673,7 +19641,7 @@ Elm.Main.make = function (_elm) {
                              ,global_colors: global_colors
                              ,global_icons: global_icons
                              ,shadowFlow: shadowFlow
-                             ,mapMoveEvt: mapMoveEvt
+                             ,mergedShadow: mergedShadow
                              ,mapNetSg: mapNetSg
                              ,dataSg: dataSg
                              ,hideVehiclesMbx: hideVehiclesMbx

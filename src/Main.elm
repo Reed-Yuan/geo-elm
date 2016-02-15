@@ -39,21 +39,9 @@ global_icons = [FontAwesome.truck, FontAwesome.ambulance, FontAwesome.taxi, Font
 shadowFlow : Signal.Mailbox Bool
 shadowFlow = Signal.mailbox False
 
-mapMoveEvt =
-    let
-        mergedShadow = Signal.mergeMany [VehicleControl.shadowSg, VideoControl.shadowSg]
-        check (s, m) = 
-            if s then False
-            else
-                case m of
-                    MoveFromTo _ _ -> True
-                    _ -> False
-                    
-        filteredMouseEvt = Signal.Extra.zip mergedShadow Drag.mouseEvents |> Signal.filter check (False, StartAt (0,0)) |> Signal.map snd
-    in 
-        filteredMouseEvt
+mergedShadow = Signal.mergeMany [VehicleControl.shadowSg, VideoControl.shadowSg] |> Signal.dropRepeats
 
-mapNetSg = mapSg mouseWheelIn screenSizeIn mapMoveEvt
+mapNetSg = mapSg mouseWheelIn screenSizeIn Drag.mouseEvents mergedShadow
 
 dataSg : Signal (List VehiclTrace)
 dataSg = Signal.map4 (\gps mapp startTime timeDelta -> List.map3 (\x y z -> Data.parseGps x y z mapp startTime timeDelta) gps global_colors global_icons) 
