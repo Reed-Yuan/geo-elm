@@ -26,6 +26,39 @@ slider name width initValue isVertical enabledSg =
         rPos = width - knotWidthHalf
         initPosition = ((initValue * (toFloat (width - knotWidth))) |> round) + knotWidthHalf
         
+<<<<<<< HEAD
+=======
+        {-
+        check (s, m, e) = 
+            if not (s && e) then False
+            else
+                case m of
+                    MoveFromTo _ _ -> True
+                    _ -> False
+                    
+        filteredMouseEvt = Signal.Extra.zip3 hoverFlow.signal Drag.mouseEvents enabledSg 
+                            |> Signal.filter check (False, StartAt (0,0), False) |> Signal.map (\(_, x, _) -> x)
+        
+>>>>>>> 503c31e0519d26649e359104c4e4b71acecd6914
+        sliderOps : Signal Int
+        sliderOps = 
+            let
+                op enabled inside msEvt =
+                    if not (enabled && inside) then 0
+                    else 
+                        case msEvt of
+                            MoveFromTo (x0,y0) (x1, y1) ->
+                                if isVertical
+                                then (y0 - y1)
+                                else (x1 - x0)
+                            _ -> 0
+            in
+<<<<<<< HEAD
+                Signal.map3 op enabledSg hoverFlow.signal Drag.mouseEvents
+=======
+                Signal.map merge filteredMouseEvt
+        -}
+        
         sliderOps : Signal Int
         sliderOps = 
             let
@@ -40,6 +73,8 @@ slider name width initValue isVertical enabledSg =
                             _ -> 0
             in
                 Signal.map3 op enabledSg hoverFlow.signal Drag.mouseEvents
+                    |> Signal.filter ((/=) 0) 0
+>>>>>>> 503c31e0519d26649e359104c4e4b71acecd6914
                 
         step a acc = (a + acc) |> Basics.min rPos |> Basics.max lPos
         posSignal = Signal.foldp step initPosition sliderOps |> Signal.dropRepeats
