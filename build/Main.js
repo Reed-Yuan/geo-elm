@@ -18424,25 +18424,21 @@ Elm.Widget.make = function (_elm) {
    enabledSg) {
       var hoverFlow = $Signal.mailbox(false);
       var sliderOps = function () {
-         var op = F3(function (enabled,inside,msEvt) {
-            if ($Basics.not(enabled && inside)) return 0; else {
+         var merge = F2(function (msEvt,enabled) {
+            if (enabled) {
                   var _p0 = msEvt;
-                  if (_p0.ctor === "MoveFromTo" && _p0._0.ctor === "_Tuple2" && _p0._1.ctor === "_Tuple2")
+                  if (_p0.ctor === "Just" && _p0._0.ctor === "MoveBy" && _p0._0._0.ctor === "_Tuple2")
                   {
-                        return isVertical ? _p0._0._1 - _p0._1._1 : _p0._1._0 - _p0._0._0;
+                        return isVertical ? _p0._0._0._1 : _p0._0._0._0;
                      } else {
                         return 0;
                      }
-               }
+               } else return 0;
          });
-         return A3($Signal.filter,
-         F2(function (x,y) {    return !_U.eq(x,y);})(0),
-         0,
-         A4($Signal.map3,
-         op,
-         enabledSg,
-         hoverFlow.signal,
-         $Drag.mouseEvents));
+         return A3($Signal.map2,
+         merge,
+         A2($Drag.track,false,hoverFlow.signal),
+         enabledSg);
       }();
       var widthHalf = A2($Bitwise.shiftRight,width,1);
       var barHeight = 6;

@@ -29,18 +29,17 @@ slider name width initValue isVertical enabledSg =
         sliderOps : Signal Int
         sliderOps = 
             let
-                op enabled inside msEvt =
-                    if not (enabled && inside) then 0
-                    else 
+                merge msEvt enabled =
+                    if enabled then
                         case msEvt of
-                            MoveFromTo (x0,y0) (x1, y1) ->
+                            Just (MoveBy (dx, dy)) ->
                                 if isVertical
-                                then (y0 - y1)
-                                else (x1 - x0)
+                                then dy
+                                else dx
                             _ -> 0
+                    else 0
             in
-                Signal.map3 op enabledSg hoverFlow.signal Drag.mouseEvents
-                    |> Signal.filter ((/=) 0) 0
+                Signal.map2 merge (Drag.track False hoverFlow.signal) enabledSg
                 
         step a acc = (a + acc) |> Basics.min rPos |> Basics.max lPos
         posSignal = Signal.foldp step initPosition sliderOps |> Signal.dropRepeats
