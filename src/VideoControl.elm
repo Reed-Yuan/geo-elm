@@ -96,7 +96,7 @@ check m =
        Just _ -> True
        _ -> False
 
-filteredMouseEvt = Drag.track False forwardFlow.signal |> Signal.filter check Nothing
+filteredMouseEvt = Drag.track False forwardFlow.signal
 
 videoControlSg =
     let
