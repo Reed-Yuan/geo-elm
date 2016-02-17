@@ -98,6 +98,8 @@ check m =
 
 filteredMouseEvt = Drag.track False forwardFlow.signal
 
+progressArea = spacer 440 30 |> Graphics.Input.hoverable (Signal.message forwardFlow.address)
+
 videoControlSg =
     let
         wth = 580
@@ -118,8 +120,8 @@ videoControlSg =
                 p = (t - t0) / (td * 3600000) * 400 
                 progress = segment (0,0) (p, 0) |> traced { defaultLine | width = 10, color = red } |> moveX -210
             in
-                collage 440 10 [darkBar, progress] |> container 440 30 (topLeftAt (absolute 0) (absolute 10))
-                    |> Graphics.Input.hoverable (Signal.message forwardFlow.address)
+                layers [collage 440 10 [darkBar, progress] `below` spacer 1 10, progressArea]
+                    
                 
         drawCtlAndPrgs videoStatus t t0 td = layers [spacer wth 30 |> color white |> opacity 0.85 
                        , spacer 40 10 `beside` (drawControls videoStatus) `beside` spacer 10 10 `beside` (drawProgress t t0 td)]        

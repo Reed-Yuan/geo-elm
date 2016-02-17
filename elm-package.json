@@ -4,7 +4,10 @@
     "repository": "https://github.com/user/project.git",
     "license": "BSD3",
     "source-directories": [
-        "src"
+        "./src",
+        "./file-reader/src",
+        "./file-reader/src/Native",
+        "./elm-dropzone-1.0.2/src"
     ],
     "exposed-modules": [],
     "dependencies": {
@@ -19,7 +22,10 @@
         "krisajenkins/elm-exts": "10.2.6 <= v < 10.2.7",
         "eskimoblood/elm-color-extra": "1.0.0 <= v < 1.0.1",
         "coreytrampe/elm-vendor": "2.0.0 <= v < 2.0.1",
-        "Dandandan/Easing": "2.0.2 <= v < 2.0.3"
+        "Dandandan/Easing": "2.0.2 <= v < 2.0.3",
+        "danyx23/elm-mimetype": "1.0.2 <= v < 2.0.0",
+        "evancz/elm-effects": "2.0.1 <= v < 3.0.0",
+        "avh4/elm-transducers": "2.0.1 <= v < 2.0.3"
     },
     "elm-version": "0.16.0 <= v < 0.17.0"
 }
