@@ -7,7 +7,7 @@
     </style>
     <script type="text/javascript" src="build/Main.js"></script>
     <script type="text/javascript" src="resources/xmlToJSON.js"></script>
-    <!--script type="text/javascript" src="resources/2012347.json"></script-->
+    <script type="text/javascript" src="resources/2012347.json"></script>
     <script type="text/javascript" src="resources/2017231.json"></script>
     <script type="text/javascript" src="resources/2026201.json"></script>
     <script type="text/javascript" src="resources/2030413.json"></script>
@@ -15,16 +15,6 @@
     <script type="text/javascript">
         var elmCtx;
         function init() {
-
-        var testString = '<?xml version="1.0" encoding="UTF-8" standalone="no" ?><gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creator="Graphhopper" version="1.1" xmlns:gh="https://graphhopper.com/public/schema/gpx/1.1">'
-        + '<metadata><copyright author="OpenStreetMap contributors"/><link href="http://graphhopper.com"><text>GraphHopper GPX</text></link><time>1969-12-31T16:00:00-08:00</time></metadata>'
-        + '<trk><name>GraphHopper MapMatching</name><trkseg>'
-        + '<trkpt lat="43.85466" lon="-79.50997"><time>2016-01-11T03:05:33-08:00</time></trkpt>'
-        + '<trkpt lat="43.85475" lon="-79.50865"><time>2016-01-11T03:06:29-08:00</time></trkpt>'
-        + '</trkseg></trk></gpx>';
-        
-        var v2012347 = gpxToJson(testString);
-        
             var div = document.getElementById('map');
             elmCtx = Elm.embed(Elm.Main, div, 
                 {mouseWheelIn: {pos:[0, 0], delta : 0}

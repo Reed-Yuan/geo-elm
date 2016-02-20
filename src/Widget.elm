@@ -26,20 +26,24 @@ slider name width initValue isVertical enabledSg =
         rPos = width - knotWidthHalf
         initPosition = ((initValue * (toFloat (width - knotWidth))) |> round) + knotWidthHalf
         
-        sliderStep msEvt pos = 
+        sliderStep msEvt (pos0, pos) = 
             let
+                pos0' = case msEvt of
+                    Start _ -> pos
+                    _ -> pos0
                 newPos = case msEvt of
-                    MoveFromTo (x0, y0) (x1, y1) ->
+                    Move (x0, y0) (x1, y1) ->
                         (if isVertical
-                            then pos + y1 - y0
-                            else pos + x1 - x0) 
+                            then pos0 + y1 - y0
+                            else pos0 + x1 - x0) 
                         |> Basics.min rPos |> Basics.max lPos
                     _ -> pos
+                d = Debug.log "(pos0, msEvt, newPos)" (pos0, msEvt, newPos)
             in
-                newPos
+                (pos0', newPos)
                 
-        posSignal = Signal.foldp sliderStep initPosition (dragEvents hoverFlow.signal enabledSg) 
-                    |> Signal.dropRepeats
+        posSignal = Signal.foldp sliderStep (initPosition, initPosition) (dragEvents hoverFlow.signal enabledSg) 
+                    |> Signal.map snd |> Signal.dropRepeats
         
         slideRect = (if isVertical then spacer (knotHeight + 10) (width + 20) else spacer (width + 20) (knotHeight + 10))
                     |> Graphics.Input.hoverable (Signal.message hoverFlow.address)
