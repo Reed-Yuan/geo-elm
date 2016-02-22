@@ -53,22 +53,18 @@ clock =
     let
         tick =
             let
-                step (clk, speedd, st0, td0, msEvt) (progress_, progress0_, animation_, clockTag_, speed_) = 
+                step (clk, speedd, st0, td0, msEvt) (progress_, animation_, clockTag_, speed_) = 
                     let
-                        progress0 = case msEvt of
-                            Start _ -> progress_
-                            _ -> progress0_
-                            
                         progress = 
                             case msEvt of
-                                Move (x0, _) (x1, _) -> 
-                                    Basics.max (progress0 + ((toFloat (x1 - x0)) / 400) * td0 * 3600000) st0
+                                Moved dx _ -> 
+                                    (Basics.max (progress_ + ((toFloat dx) / 800) * td0 * 3600000) st0)
                                     |> Basics.min (st0 + 3600000 * td0)
                                 _ -> if clk == 0 || progress_ == 0 then st0 else animate (clk - clockTag_) animation_
 
                         anime =
                            case msEvt of
-                               Move _ _ -> animation_ |> from progress
+                               Moved _ _ -> animation_ |> from progress
                                _ -> (if clk == 0 || progress_ == 0
                                     then animation_ |> from st0 |> to (st0 + 3600000 * td0) |> speed speedd
                                     else if speedd == speed_
@@ -77,17 +73,17 @@ clock =
                         
                         clockTag = 
                             case msEvt of
-                                Move _ _ -> clk
+                                Moved _ _ -> clk
                                 _ -> (if clk == 0 || speedd /= speed_
                                      then clk 
                                      else clockTag_)
                                 
                     in
-                        (progress, progress0, anime, clockTag, speedd)
+                        (progress, anime, clockTag, speedd)
             in
-                Signal.foldp step (0, 0, animation 0 |> ease Easing.linear, 0, 0 ) (Utils.zip5 realClock speedSg startTimeSg timeDeltaSg mouseEvt)
+                Signal.foldp step (0, animation 0 |> ease Easing.linear, 0, 0 ) (Utils.zip5 realClock speedSg startTimeSg timeDeltaSg mouseEvt)
     in
-        tick |> Signal.map (\(x, _, _, _, _) -> x)
+        tick |> Signal.map (\(x, _, _, _) -> x)
 
 videoRewindTaskSg = Signal.map3 (\t1 t2 td -> if t1 >= t2 + 3600000 * td then Signal.send videoOps.address Stop else Task.succeed ()) clock startTimeSg timeDeltaSg
 

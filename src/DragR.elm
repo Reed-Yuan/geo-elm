@@ -5,25 +5,25 @@ import Signal.Extra
 
 type DragEvent
     = Start (Int, Int)
-    | Move (Int, Int) (Int, Int)
+    | Moved Int Int
     | End (Int, Int)
     | Nil
     
 dragEvents: Signal Bool -> Signal Bool -> Signal DragEvent
 dragEvents hoverSg enabledSg =
     let
-        mouseChangesSg = Signal.Extra.zip Mouse.position Mouse.isDown |> Signal.Extra.deltas
-        
-        step ((((x0, y0), isDown0), ((x1, y1), isDown1)), inside, enabled) status =
+        step ((x, y), isDown, inside, enabled) ((x0, y0), isDown0, status) =
             let
-                d = 0 --Debug.log "(isDown0, isDown1)" (isDown0, isDown1)
+                status' =
+                    if enabled then
+                        case status of
+                            Nil -> if (not isDown0) && isDown && inside then Start (x, y) else Nil
+                            Start _ -> if isDown0 && isDown && inside then Moved (x - x0) (y - y0) else End (x, y)
+                            Moved _ _-> if isDown0 && isDown && inside then Moved (x - x0) (y - y0) else End (x, y)
+                            _ -> Nil
+                    else Nil
             in
-                if enabled then
-                    case status of
-                        Nil -> if (not isDown0) && isDown1 && inside then Start (x1, y1) else Nil
-                        Start (xs, ys) -> if isDown0 && isDown1 && inside then Move (xs, ys) (x1, y1) else End (x0, y0)
-                        Move (xs, ys) _ -> if isDown0 && isDown1 && inside then Move (xs, ys) (x1, y1) else End (x0, y0)
-                        _ -> Nil
-                else Nil
+                ((x, y), isDown, status')
     in
-        Signal.foldp step Nil (Signal.Extra.zip3 mouseChangesSg hoverSg enabledSg)
+        Signal.foldp step ((0, 0), False, Nil) (Signal.Extra.zip4 Mouse.position Mouse.isDown hoverSg enabledSg)
+            |> Signal.map (\(_, _, z) -> z)
