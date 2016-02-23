@@ -34,7 +34,7 @@ parseGps gpsxRaw colr icn mapp startTime timeDelta =
                                 let
                                     inTimeRange g = g.timestamp >= startTime && g.timestamp < startTime + (timeDelta) * 3600000
                                     sortedGps = x |> (List.filter inTimeRange) |> (List.sortBy .timestamp)
-                                    fullTrace = TileMap.path sortedGps mapp {defaultLine | color = colr, width = 10}
+                                    fullTrace = TileMap.path2 sortedGps mapp {defaultLine | color = colr, width = 10}
                                 in
                                     (gps.vehicleId, gps.vehicleName, colr, (icn colr 24) |> Html.toElement 24 24 |> toForm, fullTrace, sortedGps) 
                             _ -> (-1, "", Color.red, Graphics.Element.empty  |> toForm, emptyForm, [])
@@ -60,7 +60,7 @@ showTrace (_, vname, colr, icn, _, gps) t tcLength mapp =
             _ -> (emptyForm, Graphics.Element.empty)
         hstE = 
             if tcLength == 0 then emptyForm
-            else TileMap.path trace mapp {defaultLine | color = colr, width = 6, dashing=[8, 4]}
+            else TileMap.path trace mapp {defaultLine | color = colr, width = 3}
     in 
         (Graphics.Collage.group [fst head, hstE], snd head)
 

@@ -47,7 +47,7 @@ realClock =
             then 0
             else state) 
     in
-        Signal.foldp tick 0 (Signal.Extra.zip (Time.fps 20) videoOps.signal)
+        Signal.foldp tick 0 (Signal.Extra.zip (Time.fps 12) videoOps.signal)
         
 clock = 
     let

@@ -63,6 +63,15 @@ proj (lat, lon) mapp =
 path: List Gpsx -> Map -> Graphics.Collage.LineStyle -> Graphics.Collage.Form
 path p mapp s = 
     let
+        p' = List.map (\g -> move (proj (g.lat, g.lon) mapp) (circle 4 |> filled s.color) ) p
+        p_ = List.map (\g -> proj (g.lat, g.lon) mapp) p
+        p'' = (Graphics.Collage.traced s (Graphics.Collage.path p_)) :: p'
+    in
+        group p''
+        
+path2: List Gpsx -> Map -> Graphics.Collage.LineStyle -> Graphics.Collage.Form
+path2 p mapp s = 
+    let
         p_ = List.map (\g -> proj (g.lat, g.lon) mapp) p
     in
         Graphics.Collage.traced s (Graphics.Collage.path p_)
