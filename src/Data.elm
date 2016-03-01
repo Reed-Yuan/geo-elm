@@ -60,7 +60,7 @@ showTrace (_, vname, colr, icn, _, gps) t tcLength mapp =
             _ -> (emptyForm, Graphics.Element.empty)
         hstE = 
             if tcLength == 0 then emptyForm
-            else TileMap.path trace mapp {defaultLine | color = colr, width = 3}
+            else TileMap.path2 trace mapp {defaultLine | color = colr, width = 6, dashing=[8, 4]}
     in 
         (Graphics.Collage.group [fst head, hstE], snd head)
 
